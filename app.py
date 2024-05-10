@@ -45,29 +45,49 @@ class MainWindow(QtWidgets.QMainWindow):
         plotThread.start()
         self.tableWidget.setHorizontalHeaderLabels(["Time [yyyy-mm-dd hh:mm:ss]", "Temperature [°C]", "rel. Humidity [%]", "TH1 [°C]", "TH2 [°C]"])
         def __tableThreaded(i):
-            dateItem = QtWidgets.QTableWidgetItem(datetime.fromtimestamp(data[0][i]).strftime("%Y-%m-%d %H:%M:%S"))
-            dateItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-            self.tableWidget.setItem(i,0,dateItem)
-            for j in range(1,5):
-                newItem = QtWidgets.QTableWidgetItem(str(data[j][i]))
-                newItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-                self.tableWidget.setItem(i,j,newItem)
-        for i in range(0,len(data[0])):
-            self.tableWidget.insertRow(i)
+            for k in range(i, len(data[0]), 6):
+                dateItem = QtWidgets.QTableWidgetItem(datetime.fromtimestamp(data[0][k]).strftime("%Y-%m-%d %H:%M:%S"))
+                dateItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+                self.tableWidget.setItem(k,0,dateItem)
+                for j in range(1,5):
+                    newItem = QtWidgets.QTableWidgetItem(str(data[j][i]))
+                    newItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+                    self.tableWidget.setItem(k,j,newItem)
+        self.tableWidget.setRowCount(len(data[0]))
+        for i in range(0,6):
             newThread = threading.Thread(None, __tableThreaded, None, [i])
             newThread.start()
     def plot(self, date, temp, humid, resolution):
         if len(date) == 0:
             return
-        lastPlt = 0
-        for i in range(0, len(date)):
-            if i == len(date) - 1:
-                self.tempWidget.plot(date[lastPlt:len(date)], temp[lastPlt:len(date)])
-                self.humidWidget.plot(date[lastPlt:len(date)], humid[lastPlt:len(date)])
-            elif date[i+1] - date[i] > 11 * (1 if resolution == 0 else 2 if resolution == 1 else 10):
-                self.tempWidget.plot(date[lastPlt:i+1], temp[lastPlt:i+1])
-                self.humidWidget.plot(date[lastPlt:i+1], humid[lastPlt:i+1])
-                lastPlt = i + 1
+        disPoints = []
+        threads = []
+        def __discontinuity(i):
+            for i in range(i, len(date), 6):
+                if i == len(date) - 1:
+                    disPoints.append(i)
+                elif date[i+1] - date[i] > 11 * (1 if resolution == 0 else 2 if resolution == 1 else 10):
+                    disPoints.append(i)
+        for j in range(0,6):
+            newThread = threading.Thread(None, __discontinuity, None, [j])
+            threads.append(newThread)
+            newThread.start()
+        for e in threads:
+            e.join()
+        disPoints.sort()
+        for i in range(0,len(disPoints)):
+            if i == 0:
+                self.tempWidget.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1])
+                self.humidWidget.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1])
+            elif i == len(disPoints) - 1:
+                self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1])
+                self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1])
+                self.tempWidget.plot(date[disPoints[i]+1:], temp[disPoints[i]+1:])
+                self.humidWidget.plot(date[disPoints[i]+1:], humid[disPoints[i]+1:])
+            else:
+                self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1])
+                self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1])
+
     def loadHasChanged(self, s):
         self.loadBox.setEnabled(s)
     def saveHasChanged(self, s):
@@ -83,11 +103,11 @@ class MainWindow(QtWidgets.QMainWindow):
         newThread = threading.Thread(None, self.displayData, None, [])
         newThread.start()
     def browseSavePressed(self):
-        getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Save As...", "./", "Text files (*.txt)")
+        getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Save As...", f"{os.getcwd()}/logs", "Text files (*.txt)")
         if len(getFile[0]) > 0:
             self.browseSaveLine.setText(getFile[0])
     def browseLoadPressed(self):
-        getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Open...", "./", "Text files (*.txt)")
+        getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Open...", f"{os.getcwd()}/logs", "Text files (*.txt)")
         if len(getFile[0]) > 0:
             self.browseLoadLine.setText(getFile[0])
 

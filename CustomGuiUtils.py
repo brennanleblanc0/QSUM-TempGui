@@ -12,31 +12,32 @@ class OldDataParser():
             f = open(fileName, "w")
             f.close()
             return [[],[],[],[],[]]
-        output = [[],[],[],[],[]]
-        def __oldDataLoopBody(x, i):
-            tokens = x.split("\t")
-            dateString = tokens[1] + " " + tokens[2]
-            convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
-            output[0][i] = convDateTime.timestamp()
-            output[1][i] = float(tokens[3])
-            output[2][i] = float(tokens[4])
-            output[3][i] = tokens[5]
-            output[4][i] = tokens[6][0:len(tokens[6])-1]
         threads = []
         i = 0
-        eCount = 0
+        arr = []
         for x in f:
             if i < 6:
-                i += 1
+                pass
             else:
-                if eCount % resFactor == 0:
-                    for e in output:
-                        e.append(None)
-                    newThread = threading.Thread(None, __oldDataLoopBody, None, [x, i-6])
-                    threads.append(newThread)
-                    newThread.start()
-                    i += 1
-                eCount += 1
+                if (i-6) % resFactor == 0:
+                    arr.append(x)
+            i += 1
+        output = [[None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr)]
+        def __oldDataLoopBody(arr, i):
+            for j in range(i, len(arr), 6):
+                x = arr[j]
+                tokens = x.split("\t")
+                dateString = tokens[1] + " " + tokens[2]
+                convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
+                output[0][j] = convDateTime.timestamp()
+                output[1][j] = float(tokens[3])
+                output[2][j] = float(tokens[4])
+                output[3][j] = tokens[5]
+                output[4][j] = tokens[6][0:len(tokens[6])-1]
+        for k in range(0,6):
+            newThread = threading.Thread(None, __oldDataLoopBody, None, [arr, k])
+            threads.append(newThread)
+            newThread.start()
         for e in threads:
             e.join()
         f.close()
@@ -48,17 +49,9 @@ class OldDataParser():
         endMonth = int(datetime.fromtimestamp(endDate).strftime("%m"))
         startYear = int(datetime.fromtimestamp(startDate).strftime("%Y"))
         endYear = int(datetime.fromtimestamp(endDate).strftime("%Y"))
-        output = [[],[],[],[],[]]
-        def __oldDataLoopBody(i, tokens):
-            dateString = tokens[1] + " " + tokens[2]
-            convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
-            output[0][i] = convDateTime.timestamp()
-            output[1][i] = float(tokens[3])
-            output[2][i] = float(tokens[4])
-            output[3][i] = tokens[5]
-            output[4][i] = tokens[6][0:len(tokens[6])-1]
         threads = []
         i = 0
+        arr = []
         eCount = 0
         while startMonth <= endMonth and startYear <= endYear:
             try:
@@ -75,17 +68,11 @@ class OldDataParser():
                             convDateTime = datetime.strptime(f"{tokens[1]} {tokens[2]}", "%b %d %Y %H:%M:%S")
                             if convDateTime.timestamp() >= startDate and convDateTime.timestamp() <= endDate:
                                 if eCount % resFactor == 0:
-                                    for e in output:
-                                        e.append(None)
-                                    newThread = threading.Thread(None, __oldDataLoopBody, None, [i, tokens])
-                                    threads.append(newThread)
-                                    newThread.start()
-                                    i += 1
+                                    arr.append(x)
+                                eCount += 1
                             elif convDateTime.timestamp() > endDate:
-                                for e in threads:
-                                    e.join()
                                 f.close()
-                                return output
+                                raise Exception
                             eCount += 1
                     f.close()
                     j += 1
@@ -95,6 +82,22 @@ class OldDataParser():
                 if startMonth > 12:
                     startMonth = 1
                     startYear += 1
+        output = [[None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr)]
+        def __oldDataLoopBody(arr, i):
+            for j in range(i, len(arr), 6):
+                x = arr[j]
+                tokens = x.split("\t")
+                dateString = tokens[1] + " " + tokens[2]
+                convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
+                output[0][j] = convDateTime.timestamp()
+                output[1][j] = float(tokens[3])
+                output[2][j] = float(tokens[4])
+                output[3][j] = tokens[5]
+                output[4][j] = tokens[6][0:len(tokens[6])-1]
+        for j in range(0,6):
+            newThread = threading.Thread(None, __oldDataLoopBody, None, [arr, j])
+            threads.append(newThread)
+            newThread.start()
         for e in threads:
             e.join()
         return output
