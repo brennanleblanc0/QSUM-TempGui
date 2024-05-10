@@ -179,13 +179,6 @@
                      </property>
                     </widget>
                    </item>
-                   <item alignment="Qt::AlignHCenter">
-                    <widget class="QLabel" name="label_2">
-                     <property name="text">
-                      <string>to</string>
-                     </property>
-                    </widget>
-                   </item>
                    <item>
                     <widget class="QDateEdit" name="endDate">
                      <property name="date">
