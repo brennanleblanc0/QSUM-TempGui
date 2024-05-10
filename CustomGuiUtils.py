@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QWidget
 from datetime import datetime
 import threading
+import os
 
 class OldDataParser():
     @staticmethod
@@ -42,7 +43,7 @@ class OldDataParser():
         f.close()
         return output
     @staticmethod
-    def parseDateRange(startDate:float, endDate:float, resolutionIndex:int) -> list:
+    def parseDateRange(startDate:float, endDate:float, resolutionIndex:int, logsDir:str) -> list:
         resFactor = 1 if resolutionIndex == 0 else 2 if resolutionIndex == 1 else 10
         startMonth = int(datetime.fromtimestamp(startDate).strftime("%m"))
         endMonth = int(datetime.fromtimestamp(endDate).strftime("%m"))
@@ -66,7 +67,7 @@ class OldDataParser():
                 k = 0
                 while True:
                     k = 0
-                    f = open(f"./logs/QSUM_TempLog_{startMonth if startMonth >= 10 else f"0{startMonth}"}.{startYear}_{j}.txt", encoding="iso-8859-1")
+                    f = open(f"{logsDir}/QSUM_TempLog_{startMonth if startMonth >= 10 else f"0{startMonth}"}.{startYear}_{j}.txt", encoding="iso-8859-1")
                     for x in f:
                         if k < 6:
                             k += 1

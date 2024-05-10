@@ -17,8 +17,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadRadio.toggled.connect(self.loadHasChanged)
         self.saveRadio.toggled.connect(self.saveHasChanged)
         self.saveRadio.toggle()
-        self.browseSaveLine.setText(f"./logs/QSUM_TempLog_{datetime.utcnow().strftime("%m.%Y")}.txt")
-        self.browseLoadLine.setText(f"./logs/QSUM_TempLog_{datetime.utcnow().strftime("%m.%Y")}.txt")
+        self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{datetime.utcnow().strftime("%m.%Y")}.txt")
+        self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{datetime.utcnow().strftime("%m.%Y")}.txt")
         self.displayData()
         self.tempWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.humidWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
@@ -38,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tableWidget.setRowCount(0)
         resolution = self.resolutionCombo.currentIndex() if self.loadRadio.isChecked() else 0
         if self.loadRadio.isChecked() and self.loadDateRadio.isChecked():
-            data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution)
+            data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution, f"{os.getcwd()}/logs")
         else:
             data = OldDataParser.parseData(self.browseSaveLine.text() if self.saveRadio.isChecked() else self.browseLoadLine.text(), resolution)
         plotThread = threading.Thread(None, self.plot, None, [data[0], data[1], data[2], resolution])
