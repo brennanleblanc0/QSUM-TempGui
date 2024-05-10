@@ -66,7 +66,7 @@ class OldDataParser():
                 k = 0
                 while True:
                     k = 0
-                    f = open(f"QSUM_TempLog_{startMonth if startMonth >= 10 else f"0{startMonth}"}.{startYear}_{j}.txt", encoding="iso-8859-1")
+                    f = open(f"./logs/QSUM_TempLog_{startMonth if startMonth >= 10 else f"0{startMonth}"}.{startYear}_{j}.txt", encoding="iso-8859-1")
                     for x in f:
                         if k < 6:
                             k += 1
