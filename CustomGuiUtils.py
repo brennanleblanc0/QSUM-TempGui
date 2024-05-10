@@ -1,7 +1,6 @@
 from PyQt6.QtWidgets import QWidget
 from datetime import datetime
 import threading
-import os
 
 class OldDataParser():
     @staticmethod
