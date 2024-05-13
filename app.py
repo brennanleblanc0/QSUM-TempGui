@@ -12,6 +12,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         uic.loadUi("mainwindow.ui", self)
+        self.curData = []
+        self.curDisPoints = []
         self.loadBox.setEnabled(False)
         self.saveBox.setEnabled(False)
         self.loadRadio.toggled.connect(self.loadHasChanged)
@@ -31,6 +33,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadFileRadio.toggled.connect(self.loadFileHasChanged)
         self.loadDateRadio.toggled.connect(self.loadDateHasChanged)
         self.loadFileRadio.toggle()
+        self.analysisButton.pressed.connect(self.genButtonPressed)
     def displayData(self):
         self.tempWidget.clear()
         self.humidWidget.clear()
@@ -41,6 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
             data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution, f"{os.getcwd()}/logs")
         else:
             data = OldDataParser.parseData(self.browseSaveLine.text() if self.saveRadio.isChecked() else self.browseLoadLine.text(), resolution)
+        self.curData = data
         plotThread = threading.Thread(None, self.plot, None, [data[0], data[1], data[2], resolution])
         plotThread.start()
         self.tableWidget.setHorizontalHeaderLabels(["Time [yyyy-mm-dd hh:mm:ss]", "Temperature [°C]", "rel. Humidity [%]", "TH1 [°C]", "TH2 [°C]"])
@@ -75,6 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for e in threads:
             e.join()
         disPoints.sort()
+        self.curDisPoints = disPoints
         for i in range(0,len(disPoints)):
             if i == 0:
                 self.tempWidget.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1])
@@ -110,6 +115,16 @@ class MainWindow(QtWidgets.QMainWindow):
         getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Open...", f"{os.getcwd()}/logs", "Text files (*.txt)")
         if len(getFile[0]) > 0:
             self.browseLoadLine.setText(getFile[0])
+    def genButtonPressed(self):
+        if not self.loadRadio.isChecked():
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Warning",
+                "Analysis is not available in Save mode. Please switch to Load mode.",
+                buttons=QtWidgets.QMessageBox.StandardButton.Ok,
+                defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
+            )
+
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

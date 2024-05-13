@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>945</width>
-    <height>600</height>
+    <width>1388</width>
+    <height>667</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -166,7 +166,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QWidget" name="widget_2" native="true">
+                 <widget class="QWidget" name="dateRangeWidget" native="true">
                   <layout class="QHBoxLayout" name="horizontalLayout_8">
                    <item>
                     <widget class="QDateEdit" name="startDate">
@@ -244,7 +244,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>3</number>
          </property>
          <widget class="QWidget" name="graphTab">
           <attribute name="title">
@@ -382,6 +382,46 @@
              <column/>
              <column/>
             </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="analysisTab">
+          <attribute name="title">
+           <string>Analysis</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_10">
+           <item>
+            <layout class="QVBoxLayout" name="analysisLayout">
+             <item>
+              <widget class="PlotWidget" name="analysisWidget" native="true"/>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="analysisBox">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>150</height>
+                </size>
+               </property>
+               <property name="title">
+                <string>Toggle Graphs</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="analysisButton">
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Generate</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </widget>
