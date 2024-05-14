@@ -13,6 +13,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         uic.loadUi("mainwindow.ui", self)
+        self.threadRun = 0
         self.curData = []
         self.curDisPoints = []
         self.loadBox.setEnabled(False)
@@ -49,8 +50,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             data = OldDataParser.parseData(self.browseSaveLine.text() if self.saveRadio.isChecked() else self.browseLoadLine.text(), resolution)
         self.curData = data
-        plotThread = threading.Thread(None, self.plot, None, [data[0], data[1], data[2], resolution])
-        plotThread.start()
+        self.threadRun = 1
         self.tableWidget.setHorizontalHeaderLabels(["Time [yyyy-mm-dd hh:mm:ss]", "Temperature [°C]", "rel. Humidity [%]", "TH1 [°C]", "TH2 [°C]"])
         def __tableThreaded(i):
             for k in range(i, len(data[0]), 6):
@@ -108,9 +108,17 @@ class MainWindow(QtWidgets.QMainWindow):
     def saveFile(self):
         newThread = threading.Thread(None, self.displayData, None, [])
         newThread.start()
+        while self.threadRun == 0:
+            pass
+        self.plot(self.curData[0], self.curData[1], self.curData[2], 1 if self.resolutionCombo.currentIndex() == 0 else 2 if self.resolutionCombo.currentIndex() == 1 else 10)
+        self.threadRun = 0
     def loadFile(self):
         newThread = threading.Thread(None, self.displayData, None, [])
         newThread.start()
+        while self.threadRun == 0:
+            pass
+        self.plot(self.curData[0], self.curData[1], self.curData[2], 1 if self.resolutionCombo.currentIndex() == 0 else 2 if self.resolutionCombo.currentIndex() == 1 else 10)
+        self.threadRun = 0
     def browseSavePressed(self):
         getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Save As...", f"{os.getcwd()}/logs", "Text files (*.txt)")
         if len(getFile[0]) > 0:
