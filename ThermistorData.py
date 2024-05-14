@@ -9,8 +9,8 @@ import os
 class ThermistorData():
     @staticmethod
     def readDaq(window, interval) -> None:
-        t_0 = datetime.datetime.now(datetime.timezone.utc).timestamp()
-        curDate = datetime.datetime.now(datetime.timezone.utc).strftime("%m.%Y")
+        t_0 = datetime.datetime.now(datetime.UTC).timestamp()
+        curDate = datetime.datetime.now(datetime.UTC).strftime("%m.%Y")
         fileName = f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt"
         if os.path.exists(fileName):
             f = open(fileName, "a")
@@ -35,8 +35,8 @@ class ThermistorData():
 
                 temp = 3988/math.log((10000*((5/eng_units_value)-1))/(10000*math.exp(-3988/298.15))) - 273.15
                 window.curTempNumber.display("{:.2f}".format(temp))
-                if (datetime.datetime.now(datetime.timezone.utc).timestamp() - t_0) >= interval:
-                    t_0 = datetime.datetime.now(datetime.timezone.utc).timestamp()
+                if (datetime.datetime.now(datetime.UTC).timestamp() - t_0) >= interval:
+                    t_0 = datetime.datetime.now(datetime.UTC).timestamp()
                     curTime = datetime.datetime.fromtimestamp(t_0).strftime("%b %d %Y\t%H:%M:%S")
                     f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\n")
                     f.flush()
