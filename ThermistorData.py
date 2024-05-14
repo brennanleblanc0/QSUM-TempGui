@@ -10,7 +10,8 @@ class ThermistorData():
     @staticmethod
     def readDaq(window, interval) -> None:
         t_0 = datetime.datetime.now(datetime.UTC).timestamp()
-        fileName = f"{os.getcwd()}/logs/QSUM_TempLog_{datetime.datetime.now(datetime.UTC).strftime("%m.%Y")}.txt"
+        curDate = datetime.datetime.now(datetime.UTC).strftime("%m.%Y")
+        fileName = f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt"
         if os.path.exists(fileName):
             f = open(fileName, "a")
         else:
@@ -36,7 +37,8 @@ class ThermistorData():
                 window.curTempNumber.display("{:.2f}".format(temp))
                 if (datetime.datetime.now(datetime.UTC).timestamp() - t_0) >= interval:
                     t_0 = datetime.datetime.now(datetime.UTC).timestamp()
-                    f.write(f"New\t{datetime.datetime.fromtimestamp(t_0).strftime("%b %d %Y\t%H:%M:%S")}\t{temp:.2f}\t{0.0:.2f}\t--\t--\n")
+                    curTime = datetime.datetime.fromtimestamp(t_0).strftime("%b %d %Y\t%H:%M:%S")
+                    f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\n")
                     f.flush()
             except ULError as e:
                 # Display the error

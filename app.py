@@ -2,7 +2,7 @@ from PyQt6 import QtCore, QtWidgets, uic
 from pyqtgraph import PlotWidget
 from CustomGuiUtils import OldDataParser
 from DeviceReader import DeviceReader
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from ThermistorData import ThermistorData
 import threading
 import pyqtgraph as pg
@@ -20,8 +20,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadRadio.toggled.connect(self.loadHasChanged)
         self.saveRadio.toggled.connect(self.saveHasChanged)
         self.saveRadio.toggle()
-        self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{datetime.now(UTC).strftime("%m.%Y")}.txt")
-        self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{datetime.now(UTC).strftime("%m.%Y")}.txt")
+        curDate = datetime.now(timezone.utc).strftime("%m.%Y")
+        self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
+        self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
         #self.displayData()
         self.tempWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.humidWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})

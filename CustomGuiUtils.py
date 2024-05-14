@@ -9,9 +9,7 @@ class OldDataParser():
         try:
             f = open(fileName, encoding="iso-8859-1")
         except:
-            f = open(fileName, "w")
-            f.close()
-            return [[],[],[],[],[]]
+            print("ERROR: Does that file exist?")
         threads = []
         i = 0
         arr = []
@@ -59,7 +57,8 @@ class OldDataParser():
                 k = 0
                 while True:
                     k = 0
-                    f = open(f"{logsDir}/QSUM_TempLog_{startMonth if startMonth >= 10 else f"0{startMonth}"}.{startYear}_{j}.txt", encoding="iso-8859-1")
+                    ternState = startMonth if startMonth >= 10 else f"0{startMonth}"
+                    f = open(f"{logsDir}/QSUM_TempLog_{ternState}.{startYear}_{j}.txt", encoding="iso-8859-1")
                     for x in f:
                         if k < 6:
                             k += 1
