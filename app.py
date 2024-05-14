@@ -3,6 +3,7 @@ from pyqtgraph import PlotWidget
 from CustomGuiUtils import OldDataParser
 from DeviceReader import DeviceReader
 from datetime import datetime, UTC
+from ThermistorData import ThermistorData
 import threading
 import pyqtgraph as pg
 import sys
@@ -21,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.saveRadio.toggle()
         self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{datetime.now(UTC).strftime("%m.%Y")}.txt")
         self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{datetime.now(UTC).strftime("%m.%Y")}.txt")
-        self.displayData()
+        #self.displayData()
         self.tempWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.humidWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.saveFileButton.pressed.connect(self.saveFile)
@@ -29,11 +30,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.browseSave.pressed.connect(self.browseSavePressed)
         self.browseLoad.pressed.connect(self.browseLoadPressed)
         self.loadFileWidget.setEnabled(False)
-        self.loadDateWidget.setEnabled(False) 
+        self.loadDateWidget.setEnabled(False)
         self.loadFileRadio.toggled.connect(self.loadFileHasChanged)
         self.loadDateRadio.toggled.connect(self.loadDateHasChanged)
         self.loadFileRadio.toggle()
         self.analysisButton.pressed.connect(self.genButtonPressed)
+        dataThread = threading.Thread(None, ThermistorData.readDaq, None, [self,10], daemon=True)
+        dataThread.start()
     def displayData(self):
         self.tempWidget.clear()
         self.humidWidget.clear()
