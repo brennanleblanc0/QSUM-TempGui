@@ -49,11 +49,25 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             data = OldDataParser.parseData(self.browseSaveLine.text() if self.saveRadio.isChecked() else self.browseLoadLine.text(), resolution)
         self.curData = data
-        plotThread = threading.Thread(None, self.plot, None, [data[0], data[1], data[2], resolution])
-        plotThread.start()
+        disPoints = []
+        threads = []
+        def __discontinuity(i):
+            for i in range(i, len(data[0]), os.cpu_count()):
+                if i == len(data[0]) - 1:
+                    disPoints.append(i)
+                elif data[0][i+1] - data[0][i] > 11 * (1 if resolution == 0 else 2 if resolution == 1 else 10):
+                    disPoints.append(i)
+        for j in range(0,os.cpu_count()):
+            newThread = threading.Thread(None, __discontinuity, None, [j])
+            threads.append(newThread)
+            newThread.start()
+        for e in threads:
+            e.join()
+        disPoints.sort()
+        self.curDisPoints = disPoints
         self.tableWidget.setHorizontalHeaderLabels(["Time [yyyy-mm-dd hh:mm:ss]", "Temperature [°C]", "rel. Humidity [%]", "TH1 [°C]", "TH2 [°C]"])
         def __tableThreaded(i):
-            for k in range(i, len(data[0]), 6):
+            for k in range(i, len(data[0]), os.cpu_count()):
                 dateItem = QtWidgets.QTableWidgetItem(datetime.fromtimestamp(data[0][k]).strftime("%Y-%m-%d %H:%M:%S"))
                 dateItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
                 self.tableWidget.setItem(k,0,dateItem)
@@ -62,28 +76,14 @@ class MainWindow(QtWidgets.QMainWindow):
                     newItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
                     self.tableWidget.setItem(k,j,newItem)
         self.tableWidget.setRowCount(len(data[0]))
-        for i in range(0,6):
+        for i in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __tableThreaded, None, [i])
             newThread.start()
-    def plot(self, date, temp, humid, resolution):
+        self.plot(data[0], data[1], data[2])
+    def plot(self, date, temp, humid):
         if len(date) == 0:
             return
-        disPoints = []
-        threads = []
-        def __discontinuity(i):
-            for i in range(i, len(date), 6):
-                if i == len(date) - 1:
-                    disPoints.append(i)
-                elif date[i+1] - date[i] > 11 * (1 if resolution == 0 else 2 if resolution == 1 else 10):
-                    disPoints.append(i)
-        for j in range(0,6):
-            newThread = threading.Thread(None, __discontinuity, None, [j])
-            threads.append(newThread)
-            newThread.start()
-        for e in threads:
-            e.join()
-        disPoints.sort()
-        self.curDisPoints = disPoints
+        disPoints = self.curDisPoints
         for i in range(0,len(disPoints)):
             if i == 0:
                 self.tempWidget.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1])
@@ -96,7 +96,6 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1])
                 self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1])
-
     def loadHasChanged(self, s):
         self.loadBox.setEnabled(s)
     def saveHasChanged(self, s):

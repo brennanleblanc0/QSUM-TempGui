@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QWidget
 from datetime import datetime
 import threading
+import os
 
 class OldDataParser():
     @staticmethod
@@ -22,7 +23,7 @@ class OldDataParser():
             i += 1
         output = [[None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr)]
         def __oldDataLoopBody(arr, i):
-            for j in range(i, len(arr), 6):
+            for j in range(i, len(arr), os.cpu_count()):
                 x = arr[j]
                 tokens = x.split("\t")
                 dateString = tokens[1] + " " + tokens[2]
@@ -32,7 +33,7 @@ class OldDataParser():
                 output[2][j] = float(tokens[4])
                 output[3][j] = tokens[5]
                 output[4][j] = tokens[6][0:len(tokens[6])-1]
-        for k in range(0,6):
+        for k in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __oldDataLoopBody, None, [arr, k])
             threads.append(newThread)
             newThread.start()
@@ -83,7 +84,7 @@ class OldDataParser():
                     startYear += 1
         output = [[None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr)]
         def __oldDataLoopBody(arr, i):
-            for j in range(i, len(arr), 6):
+            for j in range(i, len(arr), os.cpu_count()):
                 x = arr[j]
                 tokens = x.split("\t")
                 dateString = tokens[1] + " " + tokens[2]
@@ -93,7 +94,7 @@ class OldDataParser():
                 output[2][j] = float(tokens[4])
                 output[3][j] = tokens[5]
                 output[4][j] = tokens[6][0:len(tokens[6])-1]
-        for j in range(0,6):
+        for j in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __oldDataLoopBody, None, [arr, j])
             threads.append(newThread)
             newThread.start()
