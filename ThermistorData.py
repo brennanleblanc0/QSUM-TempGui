@@ -52,7 +52,7 @@ class ThermistorData(threading.Thread):
                           + " Message: " + e.message)
                 except (ValueError, ZeroDivisionError) as e:
                     print("ValueError occurred. Is the Thermistor properly seated? " + e.__str__())
-                time.sleep(0.5)
+                time.sleep(0.1)
         except Exception as e:
             print("Error occurred. Did you enter the right file name?", e.__str__())
         finally:
