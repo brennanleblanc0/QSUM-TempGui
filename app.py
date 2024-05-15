@@ -38,6 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.analysisButton.pressed.connect(self.genButtonPressed)
         self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
         self.dataThread.start()
+        self.stopButton.toggled.connect(self.stopButtonPressed)
     def displayData(self):
         self.tempWidget.clear()
         self.humidWidget.clear()
@@ -107,6 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def saveFile(self):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
+            self.dataThread.join()
         self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
         self.dataThread.start()
     def loadFile(self):
@@ -129,7 +131,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 buttons=QtWidgets.QMessageBox.StandardButton.Ok,
                 defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
             )
-
+    def stopButtonPressed(self):
+        if not self.dataThread == None:
+            self.dataThread.raise_exception()
+            self.dataThread.join()
+            self.dataThread = None
+            self.curTempNumber.display("0")
+            self.curHumidNumber.display("0")
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
