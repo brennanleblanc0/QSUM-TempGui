@@ -36,8 +36,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadDateRadio.toggled.connect(self.loadDateHasChanged)
         self.loadFileRadio.toggle()
         self.analysisButton.pressed.connect(self.genButtonPressed)
-        dataThread = threading.Thread(None, ThermistorData.readDaq, None, [self,10], daemon=True)
-        dataThread.start()
+        self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
+        self.dataThread.start()
     def displayData(self):
         self.tempWidget.clear()
         self.humidWidget.clear()
@@ -105,8 +105,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def loadDateHasChanged(self, s):
         self.loadDateWidget.setEnabled(s)
     def saveFile(self):
-        newThread = threading.Thread(None, self.displayData, None, [])
-        newThread.start()
+        if not self.dataThread == None:
+            self.dataThread.raise_exception()
+        self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
+        self.dataThread.start()
     def loadFile(self):
         newThread = threading.Thread(None, self.displayData, None, [])
         newThread.start()
