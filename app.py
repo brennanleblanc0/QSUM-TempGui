@@ -38,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.analysisButton.pressed.connect(self.genButtonPressed)
         self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
         self.dataThread.start()
-        self.stopButton.toggled.connect(self.stopButtonPressed)
+        self.stopButton.pressed.connect(self.stopButtonPressed)
     def displayData(self):
         self.tempWidget.clear()
         self.humidWidget.clear()
