@@ -28,7 +28,7 @@ class ThermistorData(threading.Thread):
             f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\n")
             f.flush()
         try:
-            t_0 = datetime.datetime.now(datetime.timezone.utc).timestamp()
+            t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
             board_num = 0
             channel = 0
             ai_range = ULRange.BIP10VOLTS
@@ -42,7 +42,7 @@ class ThermistorData(threading.Thread):
                     temp = 3988/math.log((10000*((5/eng_units_value)-1))/(10000*math.exp(-3988/298.15))) - 273.15
                     self.window.curTempNumber.display("{:.2f}".format(temp))
                     if (datetime.datetime.now(datetime.timezone.utc).timestamp() - t_0) >= self.interval:
-                        t_0 = datetime.datetime.now(datetime.timezone.utc).timestamp()
+                        t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
                         curTime = datetime.datetime.fromtimestamp(t_0).strftime("%b %d %Y\t%H:%M:%S")
                         f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\n")
                         f.flush()
@@ -52,7 +52,7 @@ class ThermistorData(threading.Thread):
                           + " Message: " + e.message)
                 except (ValueError, ZeroDivisionError) as e:
                     print("ValueError occurred. Is the Thermistor properly seated? " + e.__str__())
-                time.sleep(0.1)
+                time.sleep(0.5)
         except Exception as e:
             print("Error occurred. Did you enter the right file name?", e.__str__())
         finally:
