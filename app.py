@@ -36,6 +36,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadDateRadio.toggled.connect(self.loadDateHasChanged)
         self.loadFileRadio.toggle()
         self.analysisButton.pressed.connect(self.genButtonPressed)
+        self.intervalSpin.setValue(10)
         self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
         self.dataThread.start()
         self.stopButton.pressed.connect(self.stopButtonPressed)
@@ -109,7 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
             self.dataThread.join()
-        self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
+        self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text())
         self.dataThread.start()
     def loadFile(self):
         newThread = threading.Thread(None, self.displayData, None, [])
