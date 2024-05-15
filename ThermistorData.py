@@ -10,7 +10,7 @@ import os
 
 class ThermistorData(threading.Thread):
     def __init__(self, window, interval, isAveraging, fileName):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.window = window
         self.interval = interval
         self.isAveraging = isAveraging
