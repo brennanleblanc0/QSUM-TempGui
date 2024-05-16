@@ -25,13 +25,14 @@ class ThermistorData(threading.Thread):
             f.write("S/N:M00995273\n")
             f.write(f"Measurement Interval:{self.interval}\n")
             f.write(f"Begin Data Table\n")
-            f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\n")
+            f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev\n")
             f.flush()
         try:
             t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
             board_num = 0
             channel = 0
             ai_range = ULRange.BIP10VOLTS
+            prevData = []
             while True:
                 try:
                     # Get a value from the device
@@ -41,11 +42,24 @@ class ThermistorData(threading.Thread):
 
                     temp = 3988/math.log((10000*((5/eng_units_value)-1))/(10000*math.exp(-3988/298.15))) - 273.15
                     self.window.curTempNumber.display("{:.2f}".format(temp))
+                    prevData.append(temp)
                     if (datetime.datetime.now(datetime.timezone.utc).timestamp() - t_0) >= self.interval:
                         t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
                         curTime = datetime.datetime.fromtimestamp(t_0).strftime("%b %d %Y\t%H:%M:%S")
-                        f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\n")
+                        if self.isAveraging:
+                            avg = 0
+                            avg2 = 0
+                            for e in prevData:
+                                avg += e
+                                avg += e**2
+                            avg /= len(prevData)
+                            avg2 /= len(prevData)
+                            stdDev = math.sqrt(avg**2 - avg2)
+                            f.write(f"New\t{curTime}\t{avg:.2f}\t{0.0:.2f}\t--\t--\t{stdDev}\n")
+                        else:
+                            f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\t--\n")
                         f.flush()
+                        prevData = []
                 except ULError as e:
                     # Display the error
                     print("A UL error occurred. Code: " + str(e.errorcode)
