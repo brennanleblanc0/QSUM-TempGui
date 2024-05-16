@@ -51,10 +51,11 @@ class ThermistorData(threading.Thread):
                             avg2 = 0
                             for e in prevData:
                                 avg += e
-                                avg2 += e**2
                             avg /= len(prevData)
-                            avg2 /= len(prevData)
-                            stdDev = math.sqrt(avg**2 - avg2)
+                            stdDev = 0
+                            for e in prevData:
+                                stdDev += (e - avg)**2
+                            stdDev = math.sqrt(stdDev / len(prevData))
                             f.write(f"New\t{curTime}\t{avg:.2f}\t{0.0:.2f}\t--\t--\t{stdDev}\n")
                         else:
                             f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\t--\n")
