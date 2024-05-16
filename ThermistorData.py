@@ -51,7 +51,7 @@ class ThermistorData(threading.Thread):
                             avg2 = 0
                             for e in prevData:
                                 avg += e
-                                avg += e**2
+                                avg2 += e**2
                             avg /= len(prevData)
                             avg2 /= len(prevData)
                             stdDev = math.sqrt(avg**2 - avg2)
