@@ -288,7 +288,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="graphTab">
           <attribute name="title">
@@ -305,7 +305,7 @@
               </widget>
              </item>
              <item>
-              <widget class="PlotWidget" name="tempWidget" native="true"/>
+              <widget class="MplCanvas" name="tempWidget" native="true"/>
              </item>
              <item alignment="Qt::AlignHCenter">
               <widget class="QLabel" name="tempLabel">
@@ -315,7 +315,7 @@
               </widget>
              </item>
              <item>
-              <widget class="PlotWidget" name="humidWidget" native="true"/>
+              <widget class="MplCanvas" name="humidWidget" native="true"/>
              </item>
             </layout>
            </item>
@@ -435,23 +435,16 @@
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
-            <layout class="QVBoxLayout" name="analysisLayout">
-             <item>
-              <widget class="PlotWidget" name="analysisWidget" native="true"/>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="analysisBox">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>150</height>
-                </size>
-               </property>
-               <property name="title">
-                <string>Toggle Graphs</string>
-               </property>
-              </widget>
-             </item>
+            <layout class="QVBoxLayout" name="analysisWidget"/>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="generateLayout">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
              <item>
               <widget class="QPushButton" name="analysisButton">
                <property name="maximumSize">
@@ -463,6 +456,54 @@
                <property name="text">
                 <string>Generate</string>
                </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignRight">
+              <widget class="QLabel" name="welchLabel">
+               <property name="maximumSize">
+                <size>
+                 <width>150</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Welch Split:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="welchCombo">
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <item>
+                <property name="text">
+                 <string>1</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>2</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>4</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>8</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>16</string>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>
@@ -479,9 +520,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>MplCanvas</class>
    <extends>QWidget</extends>
-   <header>pyqtgraph</header>
+   <header>app</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

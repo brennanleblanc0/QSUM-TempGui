@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QWidget
 from datetime import datetime
 import threading
 import os
+import scipy.signal as signal
 
 class OldDataParser():
     @staticmethod
@@ -41,6 +42,7 @@ class OldDataParser():
             e.join()
         f.close()
         return output
+    
     @staticmethod
     def parseDateRange(startDate:float, endDate:float, resolutionIndex:int, logsDir:str) -> list:
         resFactor = 1 if resolutionIndex == 0 else 2 if resolutionIndex == 1 else 10
@@ -102,3 +104,44 @@ class OldDataParser():
             e.join()
         return output
     
+    @staticmethod
+    def psdAndWelch(window, data, disPoints, splitFactor):
+        bestRange = -1
+        for i in range(0, len(disPoints)):
+            # if i == 0:
+            #     f_p, P_p = signal.periodogram(data[1][0:disPoints[i]+1], window='hann', scaling='density')
+            #     f_w, P_w = signal.welch(data[1][0:disPoints[i]+1], scaling='density')
+            # elif i == len(disPoints) - 1:
+            #     f_p2, P_p2 = signal.periodogram(data[1][disPoints[i-1]+1:disPoints[i]+1], window='hann', scaling='density')
+            #     f_w2, P_w2 = signal.welch(data[1][disPoints[i-1]+1:disPoints[i]+1], scaling='density')
+            #     window.analysisMpl.axes.semilogy(f_p2/1e3, P_p2)
+            #     window.analysisMpl.axes.semilogy(f_w2/1e3, P_w2)
+            #     f_p, P_p = signal.periodogram(data[1][disPoints[i]+1:], window='hann', scaling='density')
+            #     f_w, P_w = signal.welch(data[1][disPoints[i]+1:], scaling='density')
+            # else:
+            #     f_p, P_p = signal.periodogram(data[1][disPoints[i-1]+1:disPoints[i]+1], window='hann', scaling='density')
+            #     f_w, P_w = signal.welch(data[1][disPoints[i-1]+1:disPoints[i]+1], scaling='density')
+            # window.analysisMpl.axes.semilogy(f_p/1e3, P_p)
+            # window.analysisMpl.axes.semilogy(f_w/1e3, P_w)
+            if bestRange == -1 and i != 0:
+                if disPoints[0] < disPoints[i] - disPoints[i-1]:
+                    bestRange = i
+            elif i != 0:
+                if disPoints[bestRange] - disPoints[bestRange-1] < disPoints[i] - disPoints[i-1]:
+                    bestRange = i
+        if bestRange == -1:
+            f_p, P_p = signal.periodogram(data[1][0:disPoints[0]+1], fs=1/10, window='hann', scaling='density')
+            
+        else:
+            f_p, P_p = signal.periodogram(data[1][disPoints[bestRange-1]+1:disPoints[bestRange]+1:2], fs=1/10, window='hann', scaling='density')
+            f_w, P_w = OldDataParser.__pseudo_welch(data, splitFactor)
+
+        window.analysisMpl.axes.loglog(f_p*3600, P_p)
+        window.analysisMpl.axes.loglog(f_w*3600, P_w)
+        window.analysisMpl.axes.grid(True)
+        window.analysisMpl.draw()
+        print(disPoints)
+        print(bestRange)
+    @staticmethod
+    def __pseudo_welch(data, splitFactor):
+        pass

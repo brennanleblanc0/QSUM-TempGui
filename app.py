@@ -1,20 +1,36 @@
 from PyQt6 import QtCore, QtWidgets, uic
+import matplotlib.figure
+import matplotlib.pyplot
 from pyqtgraph import PlotWidget
 from CustomGuiUtils import OldDataParser
 from DeviceReader import DeviceReader
 from datetime import datetime, timezone
-from ThermistorData import ThermistorData
+#from ThermistorData import ThermistorData
 import threading
 import pyqtgraph as pg
 import sys
 import os
+import matplotlib
+matplotlib.use('QtAgg')
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
+from matplotlib.figure import Figure
+
+class MplCanvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None, width=100, height=100, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         uic.loadUi("mainwindow.ui", self)
-        self.curData = []
-        self.curDisPoints = []
+        self.analysisMpl = MplCanvas(self)
+        toolbar = NavigationToolbar2QT(self.analysisMpl, self)
+        self.analysisWidget.addWidget(toolbar)
+        self.analysisWidget.addWidget(self.analysisMpl)
+        self.curData = None
+        self.curDisPoints = None
         self.loadBox.setEnabled(False)
         self.saveBox.setEnabled(False)
         self.loadRadio.toggled.connect(self.loadHasChanged)
@@ -24,8 +40,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
         self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
         #self.displayData()
-        self.tempWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
-        self.humidWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.saveFileButton.pressed.connect(self.saveFile)
         self.loadFileButton.pressed.connect(self.loadFile)
         self.browseSave.pressed.connect(self.browseSavePressed)
@@ -37,12 +51,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadFileRadio.toggle()
         self.analysisButton.pressed.connect(self.genButtonPressed)
         self.intervalSpin.setValue(10)
-        self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
-        self.dataThread.start()
+        #self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text())
+        #self.dataThread.start()
         self.stopButton.pressed.connect(self.stopButtonPressed)
     def displayData(self):
-        self.tempWidget.clear()
-        self.humidWidget.clear()
+        self.tempWidget.axes.clear()
+        self.humidWidget.axes.clear()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
         resolution = self.resolutionCombo.currentIndex() if self.loadRadio.isChecked() else 0
@@ -88,16 +102,18 @@ class MainWindow(QtWidgets.QMainWindow):
         disPoints = self.curDisPoints
         for i in range(0,len(disPoints)):
             if i == 0:
-                self.tempWidget.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1])
-                self.humidWidget.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1])
+                self.tempWidget.axes.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1], color="black")
+                self.humidWidget.axes.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1], color="black")
             elif i == len(disPoints) - 1:
-                self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1])
-                self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1])
-                self.tempWidget.plot(date[disPoints[i]+1:], temp[disPoints[i]+1:])
-                self.humidWidget.plot(date[disPoints[i]+1:], humid[disPoints[i]+1:])
+                self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.tempWidget.axes.plot(date[disPoints[i]+1:], temp[disPoints[i]+1:], color="black")
+                self.humidWidget.axes.plot(date[disPoints[i]+1:], humid[disPoints[i]+1:], color="black")
             else:
-                self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1])
-                self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1])
+                self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
+        self.tempWidget.draw()
+        self.humidWidget.draw()
     def loadHasChanged(self, s):
         self.loadBox.setEnabled(s)
     def saveHasChanged(self, s):
@@ -110,7 +126,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
             self.dataThread.join()
-        self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text())
+        #self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text())
         self.dataThread.start()
     def loadFile(self):
         newThread = threading.Thread(None, self.displayData, None, [])
@@ -127,11 +143,24 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.loadRadio.isChecked():
             QtWidgets.QMessageBox.warning(
                 self,
-                "Warning",
+                "Analysis Warning",
                 "Analysis is not available in Save mode. Please switch to Load mode.",
                 buttons=QtWidgets.QMessageBox.StandardButton.Ok,
                 defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
             )
+        else:
+            if not self.curData == None:
+                self.analysisMpl.axes.clear()
+                newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, self.curDisPoints, int(self.welchCombo.currentText())])
+                newThread.start()
+            else:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Analysis Warning",
+                    "No data has been loaded. Please load data before using the Analysis tab.",
+                    buttons=QtWidgets.QMessageBox.StandardButton.Ok,
+                    defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
+                )
     def stopButtonPressed(self):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
