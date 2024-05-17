@@ -7,7 +7,7 @@ from pyqtgraph import PlotWidget
 from CustomGuiUtils import OldDataParser
 from DeviceReader import DeviceReader
 from datetime import datetime, timezone
-#from ThermistorData import ThermistorData
+from ThermistorData import ThermistorData
 import threading
 import pyqtgraph as pg
 import sys
@@ -153,7 +153,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             if not self.curData == None:
                 self.analysisMpl.axes.clear()
-                newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, self.curDisPoints, int(self.welchCombo.currentText())])
+                newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, self.curDisPoints, int(self.welchCombo.currentText()), self.intervalSpin.value()])
                 newThread.start()
             else:
                 QtWidgets.QMessageBox.warning(
