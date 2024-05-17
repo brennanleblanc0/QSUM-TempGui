@@ -1,6 +1,8 @@
 from PyQt6 import QtCore, QtWidgets, uic
+import matplotlib.axes
 import matplotlib.figure
 import matplotlib.pyplot
+import matplotlib.dates as mdates
 from pyqtgraph import PlotWidget
 from CustomGuiUtils import OldDataParser
 from DeviceReader import DeviceReader
@@ -40,6 +42,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
         self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
         #self.displayData()
+        self.tempWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
+        self.humidWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.saveFileButton.pressed.connect(self.saveFile)
         self.loadFileButton.pressed.connect(self.loadFile)
         self.browseSave.pressed.connect(self.browseSavePressed)
@@ -55,8 +59,8 @@ class MainWindow(QtWidgets.QMainWindow):
         #self.dataThread.start()
         self.stopButton.pressed.connect(self.stopButtonPressed)
     def displayData(self):
-        self.tempWidget.axes.clear()
-        self.humidWidget.axes.clear()
+        self.tempWidget.clear()
+        self.humidWidget.clear()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
         resolution = self.resolutionCombo.currentIndex() if self.loadRadio.isChecked() else 0
@@ -102,18 +106,16 @@ class MainWindow(QtWidgets.QMainWindow):
         disPoints = self.curDisPoints
         for i in range(0,len(disPoints)):
             if i == 0:
-                self.tempWidget.axes.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1], color="black")
-                self.humidWidget.axes.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1], color="black")
+                self.tempWidget.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1], color="black")
+                self.humidWidget.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1], color="black")
             elif i == len(disPoints) - 1:
-                self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
-                self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
-                self.tempWidget.axes.plot(date[disPoints[i]+1:], temp[disPoints[i]+1:], color="black")
-                self.humidWidget.axes.plot(date[disPoints[i]+1:], humid[disPoints[i]+1:], color="black")
+                self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.tempWidget.plot(date[disPoints[i]+1:], temp[disPoints[i]+1:], color="black")
+                self.humidWidget.plot(date[disPoints[i]+1:], humid[disPoints[i]+1:], color="black")
             else:
-                self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
-                self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
-        self.tempWidget.draw()
-        self.humidWidget.draw()
+                self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
     def loadHasChanged(self, s):
         self.loadBox.setEnabled(s)
     def saveHasChanged(self, s):
