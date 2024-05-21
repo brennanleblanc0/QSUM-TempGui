@@ -33,15 +33,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.analysisWidget.addWidget(self.analysisMpl)
         self.curData = None
         self.curDisPoints = None
-        self.loadBox.setEnabled(False)
-        self.saveBox.setEnabled(False)
-        self.loadRadio.toggled.connect(self.loadHasChanged)
-        self.saveRadio.toggled.connect(self.saveHasChanged)
-        self.saveRadio.toggle()
         curDate = datetime.now(timezone.utc).strftime("%m.%Y")
         self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
         self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
-        #self.displayData()
         self.tempWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.humidWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.saveFileButton.pressed.connect(self.saveFile)
@@ -64,10 +58,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
         resolution = self.resolutionCombo.currentIndex() if self.loadRadio.isChecked() else 0
-        if self.loadRadio.isChecked() and self.loadDateRadio.isChecked():
+        if self.loadDateRadio.isChecked():
             data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution, f"{os.getcwd()}/logs")
         else:
-            data = OldDataParser.parseData(self.browseSaveLine.text() if self.saveRadio.isChecked() else self.browseLoadLine.text(), resolution)
+            data = OldDataParser.parseData(self.browseLoadLine.text(), resolution)
         self.curData = data
         disPoints = []
         threads = []
@@ -116,10 +110,6 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 self.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
                 self.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
-    def loadHasChanged(self, s):
-        self.loadBox.setEnabled(s)
-    def saveHasChanged(self, s):
-        self.saveBox.setEnabled(s)
     def loadFileHasChanged(self, s):
         self.loadFileWidget.setEnabled(s)
     def loadDateHasChanged(self, s):
