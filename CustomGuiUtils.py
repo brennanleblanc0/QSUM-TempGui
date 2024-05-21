@@ -118,8 +118,6 @@ class OldDataParser():
         window.analysisMpl.axes.grid(True)
         window.analysisMpl.axes.legend()
         window.analysisMpl.draw()
-        print(disPoints)
-        print(bestRange)
     @staticmethod
     def __pseudo_welch(data, splitFactor, interval):
         maxData = len(data) - (len(data) % splitFactor)
