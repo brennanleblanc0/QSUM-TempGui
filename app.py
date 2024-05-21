@@ -57,7 +57,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.humidWidget.clear()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
-        resolution = self.resolutionCombo.currentIndex() if self.loadRadio.isChecked() else 0
+        resolution = self.resolutionCombo.currentIndex()
         if self.loadDateRadio.isChecked():
             data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution, f"{os.getcwd()}/logs")
         else:
