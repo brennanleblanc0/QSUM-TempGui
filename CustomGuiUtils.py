@@ -24,19 +24,8 @@ class OldDataParser():
                     arr.append(x)
             i += 1
         output = [[None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr)]
-        def __oldDataLoopBody(arr, i):
-            for j in range(i, len(arr), os.cpu_count()):
-                x = arr[j]
-                tokens = x.split("\t")
-                dateString = tokens[1] + " " + tokens[2]
-                convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
-                output[0][j] = convDateTime.timestamp()
-                output[1][j] = float(tokens[3])
-                output[2][j] = float(tokens[4])
-                output[3][j] = tokens[5]
-                output[4][j] = tokens[6][0:len(tokens[6])-1]
         for k in range(0,os.cpu_count()):
-            newThread = threading.Thread(None, __oldDataLoopBody, None, [arr, k])
+            newThread = threading.Thread(None, OldDataParser.__oldDataLoopBody, None, [arr, k, output])
             threads.append(newThread)
             newThread.start()
         for e in threads:
@@ -86,24 +75,26 @@ class OldDataParser():
                     startMonth = 1
                     startYear += 1
         output = [[None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr)]
-        def __oldDataLoopBody(arr, i):
-            for j in range(i, len(arr), os.cpu_count()):
-                x = arr[j]
-                tokens = x.split("\t")
-                dateString = tokens[1] + " " + tokens[2]
-                convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
-                output[0][j] = convDateTime.timestamp()
-                output[1][j] = float(tokens[3])
-                output[2][j] = float(tokens[4])
-                output[3][j] = tokens[5]
-                output[4][j] = tokens[6][0:len(tokens[6])-1]
         for j in range(0,os.cpu_count()):
-            newThread = threading.Thread(None, __oldDataLoopBody, None, [arr, j])
+            newThread = threading.Thread(None, OldDataParser.__oldDataLoopBody, None, [arr, j, output])
             threads.append(newThread)
             newThread.start()
         for e in threads:
             e.join()
         return output
+    
+    @staticmethod
+    def __oldDataLoopBody(arr, i, outArr):
+            for j in range(i, len(arr), os.cpu_count()):
+                x = arr[j]
+                tokens = x.split("\t")
+                dateString = tokens[1] + " " + tokens[2]
+                convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
+                outArr[0][j] = convDateTime.timestamp()
+                outArr[1][j] = float(tokens[3])
+                outArr[2][j] = float(tokens[4])
+                outArr[3][j] = tokens[5]
+                outArr[4][j] = tokens[6][0:len(tokens[6])-1]
     
     @staticmethod
     def psdAndWelch(window, data, disPoints, splitFactor, interval):
