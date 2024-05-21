@@ -171,6 +171,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.curTempNumber.display("0")
             self.curHumidNumber.display("0")
         self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
+        self.dataThread.start()
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
