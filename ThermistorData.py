@@ -61,12 +61,12 @@ class ThermistorData(threading.Thread):
                             stdDev = math.sqrt(stdDev / len(prevData))
                             f.write(f"New\t{curTime}\t{avg:.2f}\t{0.0:.2f}\t--\t--\t{stdDev}\n")
                             if self.window.saveRadio.isChecked():
-                                self.window.tempWidget.plot(t_0, avg)
+                                self.window.tempData.plot(t_0, avg)
                                 curData[1].append(avg)
                         else:
                             f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\t--\n")
                             if self.window.saveRadio.isChecked():
-                                self.window.tempWidget.plot(t_0, temp)
+                                self.window.tempData.plot(t_0, temp)
                                 curData.append(temp)
                         if self.window.saveRadio.isChecked():
                             curData[0].append(t_0)
