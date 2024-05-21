@@ -34,7 +34,7 @@ class ThermistorData(threading.Thread):
             channel = 0
             ai_range = ULRange.BIP10VOLTS
             prevData = []
-            curData = [[],[],[]]
+            plottingData = [[]]*3
             while True:
                 try:
                     # Get a value from the device
@@ -60,20 +60,8 @@ class ThermistorData(threading.Thread):
                                 stdDev += (e - avg)**2
                             stdDev = math.sqrt(stdDev / len(prevData))
                             f.write(f"New\t{curTime}\t{avg:.2f}\t{0.0:.2f}\t--\t--\t{stdDev}\n")
-                            if self.window.saveRadio.isChecked():
-                                self.window.tempData.plot(t_0, avg)
-                                curData[1].append(avg)
                         else:
                             f.write(f"New\t{curTime}\t{temp:.2f}\t{0.0:.2f}\t--\t--\t--\n")
-                            if self.window.saveRadio.isChecked():
-                                self.window.tempData.plot(t_0, temp)
-                                curData.append(temp)
-                        if self.window.saveRadio.isChecked():
-                            curData[0].append(t_0)
-                            if len(curData[0]) > 60480:
-                                curData[0].pop(0)
-                                curData[1].pop(0)
-                            self.window.curData = curData
                         f.flush()
                         prevData = []
                 except ULError as e:
