@@ -139,6 +139,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.dataThread.join()
         self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), True)
         self.dataThread.start()
+        self.statusLabel.setText("Logging in progress...")
     def loadFile(self):
         newThread = threading.Thread(None, self.displayData, None, [])
         newThread.start()
@@ -172,6 +173,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.curHumidNumber.display("0")
         self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
         self.dataThread.start()
+        self.statusLabel.setText("Logging stopped.")
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
