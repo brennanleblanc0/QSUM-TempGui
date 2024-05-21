@@ -9,12 +9,13 @@ import math
 import os
 
 class ThermistorData(threading.Thread):
-    def __init__(self, window, interval, isAveraging, fileName):
+    def __init__(self, window, interval, isAveraging, fileName, isLogging):
         threading.Thread.__init__(self, daemon=True)
         self.window = window
         self.interval = interval
         self.isAveraging = isAveraging
         self.fileName = fileName
+        self.isLogging = isLogging
     def run(self):
         if os.path.exists(self.fileName):
             f = open(self.fileName, "a")
@@ -33,6 +34,7 @@ class ThermistorData(threading.Thread):
             channel = 0
             ai_range = ULRange.BIP10VOLTS
             prevData = []
+            plottingData = [[]]*3
             while True:
                 try:
                     # Get a value from the device
@@ -42,8 +44,9 @@ class ThermistorData(threading.Thread):
 
                     temp = 3988/math.log((10000*((5/eng_units_value)-1))/(10000*math.exp(-3988/298.15))) - 273.15
                     self.window.curTempNumber.display("{:.2f}".format(temp))
-                    prevData.append(temp)
-                    if (datetime.datetime.now(datetime.timezone.utc).timestamp() - t_0) >= self.interval:
+                    if self.isLogging:
+                        prevData.append(temp)
+                    if self.isLogging and (datetime.datetime.now(datetime.timezone.utc).timestamp() - t_0) >= self.interval:
                         t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
                         curTime = datetime.datetime.fromtimestamp(t_0).strftime("%b %d %Y\t%H:%M:%S")
                         if self.isAveraging:
