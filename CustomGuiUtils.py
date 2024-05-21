@@ -85,16 +85,16 @@ class OldDataParser():
     
     @staticmethod
     def __oldDataLoopBody(arr, i, outArr):
-            for j in range(i, len(arr), os.cpu_count()):
-                x = arr[j]
-                tokens = x.split("\t")
-                dateString = tokens[1] + " " + tokens[2]
-                convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
-                outArr[0][j] = convDateTime.timestamp()
-                outArr[1][j] = float(tokens[3])
-                outArr[2][j] = float(tokens[4])
-                outArr[3][j] = tokens[5]
-                outArr[4][j] = tokens[6][0:len(tokens[6])-1]
+        for j in range(i, len(arr), os.cpu_count()):
+            x = arr[j]
+            tokens = x.split("\t")
+            dateString = tokens[1] + " " + tokens[2]
+            convDateTime = datetime.strptime(dateString, "%b %d %Y %H:%M:%S")
+            outArr[0][j] = convDateTime.timestamp()
+            outArr[1][j] = float(tokens[3])
+            outArr[2][j] = float(tokens[4])
+            outArr[3][j] = tokens[5]
+            outArr[4][j] = tokens[6][0:len(tokens[6])-1]
     
     @staticmethod
     def psdAndWelch(window, data, disPoints, splitFactor, interval):
