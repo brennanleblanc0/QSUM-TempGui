@@ -31,8 +31,8 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar = NavigationToolbar2QT(self.analysisMpl, self)
         self.analysisWidget.addWidget(toolbar)
         self.analysisWidget.addWidget(self.analysisMpl)
-        self.curData = None
-        self.curDisPoints = None
+        self.curData = [[],[],[]]
+        self.curDisPoints = []
         self.loadBox.setEnabled(False)
         self.saveBox.setEnabled(False)
         self.loadRadio.toggled.connect(self.loadHasChanged)
@@ -64,18 +64,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
         resolution = self.resolutionCombo.currentIndex() if self.loadRadio.isChecked() else 0
-        if self.loadRadio.isChecked() and self.loadDateRadio.isChecked():
-            data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution, f"{os.getcwd()}/logs")
-        else:
-            data = OldDataParser.parseData(self.browseSaveLine.text() if self.saveRadio.isChecked() else self.browseLoadLine.text(), resolution)
-        self.curData = data
+        if not self.saveRadio.isChecked():
+            if self.loadRadio.isChecked() and self.loadDateRadio.isChecked():
+                data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution, f"{os.getcwd()}/logs")
+            else:
+                data = OldDataParser.parseData(self.browseSaveLine.text() if self.saveRadio.isChecked() else self.browseLoadLine.text(), resolution)
+            self.curData = data
         disPoints = []
         threads = []
         def __discontinuity(i):
             for i in range(i, len(data[0]), os.cpu_count()):
-                if i == len(data[0]) - 1:
+                if i == len(self.curData[0]) - 1:
                     disPoints.append(i)
-                elif data[0][i+1] - data[0][i] > 11 * (1 if resolution == 0 else 2 if resolution == 1 else 10):
+                elif data[0][i+1] - self.curData[0][i] > 11 * (1 if resolution == 0 or self.saveRadio.isChecked() else 2 if resolution == 1 else 10):
                     disPoints.append(i)
         for j in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __discontinuity, None, [j])
@@ -87,19 +88,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.curDisPoints = disPoints
         self.tableWidget.setHorizontalHeaderLabels(["Time [yyyy-mm-dd hh:mm:ss]", "Temperature [°C]", "rel. Humidity [%]", "TH1 [°C]", "TH2 [°C]"])
         def __tableThreaded(i):
-            for k in range(i, len(data[0]), os.cpu_count()):
-                dateItem = QtWidgets.QTableWidgetItem(datetime.fromtimestamp(data[0][k]).strftime("%Y-%m-%d %H:%M:%S"))
+            for k in range(i, len(self.curData[0]), os.cpu_count()):
+                dateItem = QtWidgets.QTableWidgetItem(datetime.fromtimestamp(self.curData[0][k]).strftime("%Y-%m-%d %H:%M:%S"))
                 dateItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
                 self.tableWidget.setItem(k,0,dateItem)
                 for j in range(1,5):
-                    newItem = QtWidgets.QTableWidgetItem(str(data[j][i]))
+                    newItem = QtWidgets.QTableWidgetItem(str(self.curData[j][i]))
                     newItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
                     self.tableWidget.setItem(k,j,newItem)
-        self.tableWidget.setRowCount(len(data[0]))
+        self.tableWidget.setRowCount(len(self.curData[0]))
         for i in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __tableThreaded, None, [i])
             newThread.start()
-        self.plot(data[0], data[1], data[2])
+        self.plot(self.curData[0], self.curData[1], self.curData[2])
     def plot(self, date, temp, humid):
         if len(date) == 0:
             return
@@ -142,27 +143,18 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(getFile[0]) > 0:
             self.browseLoadLine.setText(getFile[0])
     def genButtonPressed(self):
-        if not self.loadRadio.isChecked():
+        if len(self.curData[0]) > 0:
+            self.analysisMpl.axes.clear()
+            newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, self.curDisPoints, int(self.welchCombo.currentText()), self.intervalSpin.value()])
+            newThread.start()
+        else:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Analysis Warning",
-                "Analysis is not available in Save mode. Please switch to Load mode.",
+                "No data has been loaded. Please load data before using the Analysis tab.",
                 buttons=QtWidgets.QMessageBox.StandardButton.Ok,
                 defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
             )
-        else:
-            if not self.curData == None:
-                self.analysisMpl.axes.clear()
-                newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, self.curDisPoints, int(self.welchCombo.currentText()), self.intervalSpin.value()])
-                newThread.start()
-            else:
-                QtWidgets.QMessageBox.warning(
-                    self,
-                    "Analysis Warning",
-                    "No data has been loaded. Please load data before using the Analysis tab.",
-                    buttons=QtWidgets.QMessageBox.StandardButton.Ok,
-                    defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
-                )
     def stopButtonPressed(self):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
