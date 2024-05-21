@@ -17,6 +17,10 @@ matplotlib.use('QtAgg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
+# TODO:
+# - Switch from threading to multiprocessing: We gain better speedup across multiple cores at the cost of shared memory
+# (some instances should still use threading but data grabbing, for example, benefits from multiprocessing)
+
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=100, height=100, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -27,17 +31,25 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
         uic.loadUi("mainwindow.ui", self)
+        # ======= Widget Setup =======
+        # Analysis Tab
         self.analysisMpl = MplCanvas(self)
         toolbar = NavigationToolbar2QT(self.analysisMpl, self)
         self.analysisWidget.addWidget(toolbar)
         self.analysisWidget.addWidget(self.analysisMpl)
+        self.analysisButton.pressed.connect(self.genButtonPressed)
+        self.intervalSpin.setValue(10)
+        # Hold on to data
         self.curData = None
         self.curDisPoints = None
+        # Pre-populate file selection
         curDate = datetime.now(timezone.utc).strftime("%m.%Y")
         self.browseSaveLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
         self.browseLoadLine.setText(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
+        # Graph tab
         self.tempWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
         self.humidWidget.setAxisItems({'bottom':pg.DateAxisItem(orientation='bottom')})
+        # All Options widgets setup
         self.saveFileButton.pressed.connect(self.saveFile)
         self.loadFileButton.pressed.connect(self.loadFile)
         self.browseSave.pressed.connect(self.browseSavePressed)
@@ -47,30 +59,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadFileRadio.toggled.connect(self.loadFileHasChanged)
         self.loadDateRadio.toggled.connect(self.loadDateHasChanged)
         self.loadFileRadio.toggle()
-        self.analysisButton.pressed.connect(self.genButtonPressed)
-        self.intervalSpin.setValue(10)
+        self.stopButton.pressed.connect(self.stopButtonPressed)
+        # Start live data without logging
         self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
         self.dataThread.start()
-        self.stopButton.pressed.connect(self.stopButtonPressed)
     def displayData(self):
+        # ======= Reset Graphs =======
         self.tempWidget.clear()
         self.humidWidget.clear()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
+        # ======= Data Collection =======
         resolution = self.resolutionCombo.currentIndex()
         if self.loadDateRadio.isChecked():
             data = OldDataParser.parseDateRange(datetime.strptime(self.startDate.date().toPyDate().strftime("%Y-%m-%d 00:00:00"), "%Y-%m-%d %H:%M:%S").timestamp(), datetime.strptime(self.endDate.date().toPyDate().strftime("%Y-%m-%d 23:59:59"), "%Y-%m-%d %H:%M:%S").timestamp(), resolution, f"{os.getcwd()}/logs")
         else:
             data = OldDataParser.parseData(self.browseLoadLine.text(), resolution)
         self.curData = data
+        # ======= Find Discontinuities =======
         disPoints = []
         threads = []
+        # Helper method for threading
         def __discontinuity(i):
             for i in range(i, len(data[0]), os.cpu_count()):
                 if i == len(data[0]) - 1:
                     disPoints.append(i)
                 elif data[0][i+1] - data[0][i] > 11 * (1 if resolution == 0 else 2 if resolution == 1 else 10):
                     disPoints.append(i)
+        # Create as many threads as "cpus" detected by the system
         for j in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __discontinuity, None, [j])
             threads.append(newThread)
@@ -79,7 +95,9 @@ class MainWindow(QtWidgets.QMainWindow):
             e.join()
         disPoints.sort()
         self.curDisPoints = disPoints
+        # ======== Table Entry ========
         self.tableWidget.setHorizontalHeaderLabels(["Time [yyyy-mm-dd hh:mm:ss]", "Temperature [°C]", "rel. Humidity [%]", "TH1 [°C]", "TH2 [°C]"])
+        # Helper method for threading
         def __tableThreaded(i):
             for k in range(i, len(data[0]), os.cpu_count()):
                 dateItem = QtWidgets.QTableWidgetItem(datetime.fromtimestamp(data[0][k]).strftime("%Y-%m-%d %H:%M:%S"))
@@ -90,6 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     newItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
                     self.tableWidget.setItem(k,j,newItem)
         self.tableWidget.setRowCount(len(data[0]))
+        # Create as many threads as "cpus" detected by the system
         for i in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __tableThreaded, None, [i])
             newThread.start()
