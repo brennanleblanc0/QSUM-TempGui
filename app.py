@@ -132,27 +132,18 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(getFile[0]) > 0:
             self.browseLoadLine.setText(getFile[0])
     def genButtonPressed(self):
-        if not self.loadRadio.isChecked():
+        if not self.curData == None:
+            self.analysisMpl.axes.clear()
+            newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, self.curDisPoints, int(self.welchCombo.currentText()), self.intervalSpin.value()])
+            newThread.start()
+        else:
             QtWidgets.QMessageBox.warning(
                 self,
                 "Analysis Warning",
-                "Analysis is not available in Save mode. Please switch to Load mode.",
+                "No data has been loaded. Please load data before using the Analysis tab.",
                 buttons=QtWidgets.QMessageBox.StandardButton.Ok,
                 defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
             )
-        else:
-            if not self.curData == None:
-                self.analysisMpl.axes.clear()
-                newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, self.curDisPoints, int(self.welchCombo.currentText()), self.intervalSpin.value()])
-                newThread.start()
-            else:
-                QtWidgets.QMessageBox.warning(
-                    self,
-                    "Analysis Warning",
-                    "No data has been loaded. Please load data before using the Analysis tab.",
-                    buttons=QtWidgets.QMessageBox.StandardButton.Ok,
-                    defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
-                )
     def stopButtonPressed(self):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
