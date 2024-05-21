@@ -34,7 +34,6 @@ class ThermistorData(threading.Thread):
             channel = 0
             ai_range = ULRange.BIP10VOLTS
             prevData = []
-            plottingData = [[]]*3
             while True:
                 try:
                     # Get a value from the device
