@@ -128,8 +128,8 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
                 self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
-        self.tempWidget.axes.draw()
-        self.humidWidget.axes.draw()
+        self.tempWidget.draw()
+        self.humidWidget.draw()
     def loadFileHasChanged(self, s):
         self.loadFileWidget.setEnabled(s)
     def loadDateHasChanged(self, s):
