@@ -116,8 +116,13 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(date) == 0:
             return
         disPoints = self.curDisPoints
+        self.tempWidget.axes.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        self.tempWidget.axes.xaxis.set_major_locator(mdates.DayLocator())
+        self.humidWidget.axes.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        self.humidWidget.axes.xaxis.set_major_locator(mdates.DayLocator())
         for i in range(0,len(disPoints)):
             if i == 0:
+                MplCanvas().axes.figure.autofmt_xdate()
                 self.tempWidget.axes.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1], color="black")
                 self.humidWidget.axes.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1], color="black")
             elif i == len(disPoints) - 1:
@@ -128,6 +133,8 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
                 self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
+        self.tempWidget.axes.figure.autofmt_xdate()
+        self.humidWidget.axes.figure.autofmt_xdate()
         self.tempWidget.draw()
         self.humidWidget.draw()
     def loadFileHasChanged(self, s):
