@@ -100,7 +100,7 @@ class DeviceReader(threading.Thread):
                 lib.TLTSPB_close(sessionHandle)
         else:
             print("No connected TSP01 Rev. B devices were detected. Check connections and installed drivers.")
-    def __openFile(self, f):
+    def __openFile(self):
         if os.path.exists(self.fileName):
             self.f = open(self.fileName, "a")
         else:
