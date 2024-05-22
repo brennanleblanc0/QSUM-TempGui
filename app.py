@@ -37,6 +37,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.analysisWidget.addWidget(toolbar)
         self.analysisWidget.addWidget(self.analysisMpl)
         self.analysisButton.pressed.connect(self.genButtonPressed)
+        self.tempLayout.addWidget(NavigationToolbar2QT(self.tempWidget, self))
+        self.humidLayout.addWidget(NavigationToolbar2QT(self.humidWidget, self))
         self.intervalSpin.setValue(10)
         # Hold on to data
         self.curData = None
@@ -66,6 +68,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # ======= Reset Graphs =======
         self.tempWidget.axes.clear()
         self.humidWidget.axes.clear()
+        self.tempWidget.draw()
+        self.humidWidget.draw()
         self.tableWidget.clearContents()
         self.tableWidget.setRowCount(0)
         # ======= Data Collection =======
@@ -102,27 +106,27 @@ class MainWindow(QtWidgets.QMainWindow):
                 dateItem = QtWidgets.QTableWidgetItem(datetime.fromtimestamp(data[0][k]).strftime("%Y-%m-%d %H:%M:%S"))
                 dateItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
                 self.tableWidget.setItem(k,0,dateItem)
+                data[0][k] = datetime.fromtimestamp(data[0][k])
                 for j in range(1,5):
                     newItem = QtWidgets.QTableWidgetItem(str(data[j][i]))
                     newItem.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
                     self.tableWidget.setItem(k,j,newItem)
         self.tableWidget.setRowCount(len(data[0]))
         # Create as many threads as "cpus" detected by the system
+        threads = []
         for i in range(0,os.cpu_count()):
             newThread = threading.Thread(None, __tableThreaded, None, [i])
+            threads.append(newThread)
             newThread.start()
+        for e in threads:
+            e.join()
         self.plot(data[0], data[1], data[2])
     def plot(self, date, temp, humid):
         if len(date) == 0:
             return
         disPoints = self.curDisPoints
-        self.tempWidget.axes.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-        self.tempWidget.axes.xaxis.set_major_locator(mdates.DayLocator())
-        self.humidWidget.axes.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-        self.humidWidget.axes.xaxis.set_major_locator(mdates.DayLocator())
         for i in range(0,len(disPoints)):
             if i == 0:
-                MplCanvas().axes.figure.autofmt_xdate()
                 self.tempWidget.axes.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1], color="black")
                 self.humidWidget.axes.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1], color="black")
             elif i == len(disPoints) - 1:
@@ -133,8 +137,6 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
                 self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
-        self.tempWidget.axes.figure.autofmt_xdate()
-        self.humidWidget.axes.figure.autofmt_xdate()
         self.tempWidget.draw()
         self.humidWidget.draw()
     def loadFileHasChanged(self, s):

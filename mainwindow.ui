@@ -298,7 +298,11 @@
               </widget>
              </item>
              <item>
-              <widget class="MplCanvas" name="tempWidget" native="true"/>
+              <layout class="QVBoxLayout" name="tempLayout">
+               <item>
+                <widget class="MplCanvas" name="tempWidget" native="true"/>
+               </item>
+              </layout>
              </item>
              <item alignment="Qt::AlignHCenter">
               <widget class="QLabel" name="tempLabel">
@@ -308,7 +312,11 @@
               </widget>
              </item>
              <item>
-              <widget class="MplCanvas" name="humidWidget" native="true"/>
+              <layout class="QVBoxLayout" name="humidLayout">
+               <item>
+                <widget class="MplCanvas" name="humidWidget" native="true"/>
+               </item>
+              </layout>
              </item>
             </layout>
            </item>
