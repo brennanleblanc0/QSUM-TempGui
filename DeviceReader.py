@@ -59,11 +59,9 @@ class DeviceReader(threading.Thread):
 
                     #Returns the temperature measured by the internal sensor in the TSP01 in °C.
                     lib.TLTSPB_getTemperatureData(sessionHandle, ch_intern, attribute, byref(temperature))
-                    print ("Internal Sensor Temperature: " + str(round(temperature.value,2)) + " °C")
 
                     #This returns the humidity measured by the internal sensor in the TSP01.
                     lib.TLTSPB_getHumidityData(sessionHandle, attribute, byref(humidity))
-                    print("Humidity: " + str(round(humidity.value,2)) + " %")
 
                     temp = temperature.value
                     humid = humidity.value
