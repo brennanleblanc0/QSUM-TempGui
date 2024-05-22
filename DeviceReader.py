@@ -92,7 +92,7 @@ class DeviceReader(threading.Thread):
                         else:
                             self.f.write(f"New\t{curTime}\t{temp:.2f}\t{humid:.2f}\t--\t--\t--\n")
                         self.f.flush()
-                        prevData = []
+                        prevData = [[],[]]
             finally:
                 if self.isLogging:
                     self.f.close()
