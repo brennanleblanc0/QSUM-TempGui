@@ -118,16 +118,16 @@ class MainWindow(QtWidgets.QMainWindow):
         disPoints = self.curDisPoints
         for i in range(0,len(disPoints)):
             if i == 0:
-                self.axes.tempWidget.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1], color="black")
-                self.axes.humidWidget.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1], color="black")
+                self.tempWidget.axes.plot(date[0:disPoints[i]+1], temp[0:disPoints[i]+1], color="black")
+                self.humidWidget.axes.plot(date[0:disPoints[i]+1], humid[0:disPoints[i]+1], color="black")
             elif i == len(disPoints) - 1:
-                self.axes.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
-                self.axes.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
-                self.axes.tempWidget.plot(date[disPoints[i]+1:], temp[disPoints[i]+1:], color="black")
-                self.axes.humidWidget.plot(date[disPoints[i]+1:], humid[disPoints[i]+1:], color="black")
+                self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.tempWidget.axes.plot(date[disPoints[i]+1:], temp[disPoints[i]+1:], color="black")
+                self.humidWidget.axes.plot(date[disPoints[i]+1:], humid[disPoints[i]+1:], color="black")
             else:
-                self.axes.tempWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
-                self.axes.humidWidget.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.tempWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], temp[disPoints[i-1]+1:disPoints[i]+1], color="black")
+                self.humidWidget.axes.plot(date[disPoints[i-1]+1:disPoints[i]+1], humid[disPoints[i-1]+1:disPoints[i]+1], color="black")
     def loadFileHasChanged(self, s):
         self.loadFileWidget.setEnabled(s)
     def loadDateHasChanged(self, s):
