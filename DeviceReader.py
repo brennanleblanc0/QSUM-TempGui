@@ -14,8 +14,8 @@ class DeviceReader(threading.Thread):
         self.fileName = fileName
         self.isLogging = isLogging
     def run(self):
-        f = None
-        self.__openFile(f)
+        if self.isLogging:
+            self.__openFile()
         curMonth = int(datetime.datetime.now(datetime.timezone.utc).strftime("%m"))
         lib = cdll.LoadLibrary("C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLTSPB_64.dll")
 
@@ -45,11 +45,11 @@ class DeviceReader(threading.Thread):
                 sessionHandle=c_ulong(0)
                 lib.TLTSPB_init(deviceName, 0, 0, byref(sessionHandle))
                 while True:
-                    if curMonth < int(datetime.datetime.now(datetime.timezone.utc).strftime("%m")):
+                    if self.isLogging and curMonth < int(datetime.datetime.now(datetime.timezone.utc).strftime("%m")):
                         curDate = datetime.datetime.now(datetime.timezone.utc).strftime("%m.%Y")
                         self.fileName = self.__openFile(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
                         self.window.browseSaveLine.setText(self.fileName)
-                        self.__openFile(f)
+                        self.__openFile()
                     #Declare variables and constants for measurements
                     #See TLTSP_Defines.h and TLTSPB.h for definitions of constants
                     temperature=c_longdouble(0.0)
@@ -90,29 +90,30 @@ class DeviceReader(threading.Thread):
                                 stdDevH += (prevData[1][i] - avgH)**2
                             stdDevT = math.sqrt(stdDevT / len(prevData[0]))
                             stdDevH = math.sqrt(stdDevH / len(prevData[1]))
-                            f.write(f"New\t{curTime}\t{avgT:.2f}\t{avgH:.2f}\t--\t--\t{stdDevT}\t{stdDevH}\n")
+                            self.f.write(f"New\t{curTime}\t{avgT:.2f}\t{avgH:.2f}\t--\t--\t{stdDevT}\t{stdDevH}\n")
                         else:
-                            f.write(f"New\t{curTime}\t{temp:.2f}\t{humid:.2f}\t--\t--\t--\n")
-                        f.flush()
+                            self.f.write(f"New\t{curTime}\t{temp:.2f}\t{humid:.2f}\t--\t--\t--\n")
+                        self.f.flush()
                         prevData = []
             finally:
-                f.close()
+                if self.isLogging:
+                    self.f.close()
                 #Close the connection to the TSP01 Rev. B.
                 lib.TLTSPB_close(sessionHandle)
         else:
             print("No connected TSP01 Rev. B devices were detected. Check connections and installed drivers.")
     def __openFile(self, f):
         if os.path.exists(self.fileName):
-            f = open(self.fileName, "a")
+            self.f = open(self.fileName, "a")
         else:
-            f = open(self.fileName, "w")
-            f.write("QSUM Temperature and Humidity Monitor Log\n")
-            f.write("Device:TSP01B\n")
-            f.write("S/N:M00995273\n")
-            f.write(f"Measurement Interval:{self.interval}\n")
-            f.write(f"Begin Data Table\n")
-            f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev Temp\t Std. Dev Humid\n")
-            f.flush()
+            self.f = open(self.fileName, "w")
+            self.f.write("QSUM Temperature and Humidity Monitor Log\n")
+            self.f.write("Device:TSP01B\n")
+            self.f.write("S/N:M00995273\n")
+            self.f.write(f"Measurement Interval:{self.interval}\n")
+            self.f.write(f"Begin Data Table\n")
+            self.f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev Temp\t Std. Dev Humid\n")
+            self.f.flush()
     def get_id(self):
         if hasattr(self, '_thread_id'):
             return self._thread_id
