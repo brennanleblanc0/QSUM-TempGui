@@ -298,7 +298,7 @@
               </widget>
              </item>
              <item>
-              <widget class="PlotWidget" name="tempWidget" native="true"/>
+              <widget class="MplCanvas" name="tempWidget" native="true"/>
              </item>
              <item alignment="Qt::AlignHCenter">
               <widget class="QLabel" name="tempLabel">
@@ -308,7 +308,7 @@
               </widget>
              </item>
              <item>
-              <widget class="PlotWidget" name="humidWidget" native="true"/>
+              <widget class="MplCanvas" name="humidWidget" native="true"/>
              </item>
             </layout>
            </item>
@@ -513,9 +513,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>MplCanvas</class>
    <extends>QWidget</extends>
-   <header>pyqtgraph</header>
+   <header>app</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
