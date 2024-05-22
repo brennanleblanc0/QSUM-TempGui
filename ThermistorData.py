@@ -17,17 +17,9 @@ class ThermistorData(threading.Thread):
         self.fileName = fileName
         self.isLogging = isLogging
     def run(self):
-        if os.path.exists(self.fileName):
-            f = open(self.fileName, "a")
-        else:
-            f = open(self.fileName, "w")
-            f.write("QSUM Temperature and Humidity Monitor Log\n")
-            f.write("Device:TSP01B\n")
-            f.write("S/N:M00995273\n")
-            f.write(f"Measurement Interval:{self.interval}\n")
-            f.write(f"Begin Data Table\n")
-            f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev\n")
-            f.flush()
+        f = None
+        self.__openFile(f)
+        curMonth = int(datetime.datetime.now(datetime.timezone.utc).strftime("%m"))
         try:
             t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
             board_num = 0
@@ -35,12 +27,16 @@ class ThermistorData(threading.Thread):
             ai_range = ULRange.BIP10VOLTS
             prevData = []
             while True:
+                if curMonth < int(datetime.datetime.now(datetime.timezone.utc).strftime("%m")):
+                    curDate = datetime.datetime.now(datetime.timezone.utc).strftime("%m.%Y")
+                    self.fileName = self.__openFile(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
+                    self.window.browseSaveLine.setText(self.fileName)
+                    self.__openFile(f)
                 try:
                     # Get a value from the device
                     value = ul.a_in(board_num, channel, ai_range)
                     # Convert the raw value to engineering units
                     eng_units_value = ul.to_eng_units(board_num, ai_range, value)
-
                     temp = 3988/math.log((10000*((5/eng_units_value)-1))/(10000*math.exp(-3988/298.15))) - 273.15
                     self.window.curTempNumber.display("{:.2f}".format(temp))
                     if self.isLogging:
@@ -74,6 +70,18 @@ class ThermistorData(threading.Thread):
             print("Error occurred. Did you enter the right file name?", e.__str__())
         finally:
             f.close()
+    def __openFile(self, f):
+        if os.path.exists(self.fileName):
+            f = open(self.fileName, "a")
+        else:
+            f = open(self.fileName, "w")
+            f.write("QSUM Temperature and Humidity Monitor Log\n")
+            f.write("Device:TSP01B\n")
+            f.write("S/N:M00995273\n")
+            f.write(f"Measurement Interval:{self.interval}\n")
+            f.write(f"Begin Data Table\n")
+            f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev\n")
+            f.flush()
     def get_id(self):
         if hasattr(self, '_thread_id'):
             return self._thread_id

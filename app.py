@@ -7,7 +7,6 @@ from pyqtgraph import PlotWidget
 from CustomGuiUtils import OldDataParser
 from DeviceReader import DeviceReader
 from datetime import datetime, timezone
-from ThermistorData import ThermistorData
 import threading
 import pyqtgraph as pg
 import sys
@@ -61,7 +60,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.loadFileRadio.toggle()
         self.stopButton.pressed.connect(self.stopButtonPressed)
         # Start live data without logging
-        self.dataThread = ThermistorData(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
+        self.dataThread = DeviceReader(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
         self.dataThread.start()
     def displayData(self):
         # ======= Reset Graphs =======
@@ -137,7 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
             self.dataThread.join()
-        self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), True)
+        self.dataThread = DeviceReader(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), True)
         self.dataThread.start()
         self.statusLabel.setText("Logging in progress...")
     def loadFile(self):
@@ -171,7 +170,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.dataThread = None
             self.curTempNumber.display("0")
             self.curHumidNumber.display("0")
-        self.dataThread = ThermistorData(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
+        self.dataThread = DeviceReader(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
         self.dataThread.start()
         self.statusLabel.setText("Logging stopped.")
 
