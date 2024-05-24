@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QMainWindow
 from datetime import datetime
 import threading
 import os
@@ -7,12 +7,12 @@ import numpy as np
 
 class OldDataParser():
     @staticmethod
-    def parseData(fileName:str, resolutionIndex:int) -> list:
+    def parseData(window:QMainWindow, fileName:str, resolutionIndex:int) -> list:
         resFactor = 1 if resolutionIndex == 0 else 2 if resolutionIndex == 1 else 10
         try:
             f = open(fileName, encoding="iso-8859-1")
         except:
-            print("ERROR: Does that file exist?")
+            window.statusBar.showMessage("ERROR: Does that file exist?", 10)
         threads = []
         i = 0
         arr = []
@@ -31,7 +31,8 @@ class OldDataParser():
         for e in threads:
             e.join()
         f.close()
-        return output
+        output.append("File 1")
+        return [output]
     
     @staticmethod
     def parseDateRange(startDate:float, endDate:float, resolutionIndex:int, logsDir:str) -> list:
@@ -41,7 +42,7 @@ class OldDataParser():
         startYear = int(datetime.fromtimestamp(startDate).strftime("%Y"))
         endYear = int(datetime.fromtimestamp(endDate).strftime("%Y"))
         threads = []
-        i = 0
+        allArr = []
         arr = []
         eCount = 0
         while startMonth <= endMonth and startYear <= endYear:
@@ -64,24 +65,34 @@ class OldDataParser():
                                 eCount += 1
                             elif convDateTime.timestamp() > endDate:
                                 f.close()
+                                allArr.append(arr)
+                                arr = []
                                 raise Exception
                             eCount += 1
                     f.close()
                     j += 1
+                    allArr.append(arr)
+                    arr = []
             except Exception as err:
-                print(err)
                 startMonth += 1
                 if startMonth > 12:
                     startMonth = 1
                     startYear += 1
-        output = [[None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr), [None]*len(arr)]
-        for j in range(0,os.cpu_count()):
-            newThread = threading.Thread(None, OldDataParser.__oldDataLoopBody, None, [arr, j, output])
-            threads.append(newThread)
-            newThread.start()
-        for e in threads:
-            e.join()
-        return output
+        allOut = []
+        i = 1
+        for a in allArr:
+            output = [[None]*len(a), [None]*len(a), [None]*len(a), [None]*len(a), [None]*len(a)]
+            for j in range(0,os.cpu_count()):
+                newThread = threading.Thread(None, OldDataParser.__oldDataLoopBody, None, [a, j, output])
+                threads.append(newThread)
+                newThread.start()
+            for e in threads:
+                e.join()
+            output.append(f"File {i}")
+            i+=1
+            allOut.append(output)
+            threads = []
+        return allOut
     
     @staticmethod
     def __oldDataLoopBody(arr, i, outArr):
@@ -97,24 +108,34 @@ class OldDataParser():
             outArr[4][j] = tokens[6][0:len(tokens[6])-1]
     
     @staticmethod
-    def psdAndWelch(window, data, disPoints, splitFactor, interval):
-        bestRange = -1
-        for i in range(0, len(disPoints)):
-            if bestRange == -1 and i != 0:
-                if disPoints[0] < disPoints[i] - disPoints[i-1]:
-                    bestRange = i
-            elif i != 0:
-                if disPoints[bestRange] - disPoints[bestRange-1] < disPoints[i] - disPoints[i-1]:
-                    bestRange = i
-        if bestRange == -1:
-            f_p, P_p = signal.periodogram(data[1][0:disPoints[0]+1], fs=1/interval, window='hann', scaling='density')
-            f_w, P_w = OldDataParser.__pseudo_welch(data[1][0:disPoints[0]+1], splitFactor, interval)
-        else:
-            f_p, P_p = signal.periodogram(data[1][disPoints[bestRange-1]+1:disPoints[bestRange]+1], fs=1/interval, window='hann', scaling='density')
-            f_w, P_w = OldDataParser.__pseudo_welch(data[1][disPoints[bestRange-1]+1:disPoints[bestRange]+1], splitFactor, interval)
+    def psdAndWelch(window:QMainWindow, data:list, splitFactor:int, interval:int, axis:int) -> None:
+        comboList = []
+        for a in data:
+            if len(a[1]) > len(comboList):
+                comboList = a[1]
 
-        window.analysisMpl.axes.loglog(f_p*3600, P_p, label="PSD")
-        window.analysisMpl.axes.loglog(f_w*3600, P_w, label="Welch")
+        f_p, P_p = signal.periodogram(comboList, fs=1/interval, window='hann', scaling='density')
+        mirrorList = comboList
+        mirrorList.reverse()
+        distList = mirrorList + comboList + mirrorList
+        # f_w, P_w = OldDataParser.__pseudo_welch(comboList, splitFactor, interval)
+        f_w, P_w = signal.welch(distList, fs=1/interval, scaling='density', nperseg=len(distList)/splitFactor)
+
+        match axis:
+            case 0:
+                window.analysisMpl.axes.plot(f_p*3600, np.sqrt(P_p), label="PSD")
+                window.analysisMpl.axes.plot(f_w*3600, np.sqrt(P_w), label="Welch")
+            case 1:
+                window.analysisMpl.axes.semilogx(f_p*3600, np.sqrt(P_p), label="PSD")
+                window.analysisMpl.axes.semilogx(f_w*3600, np.sqrt(P_w), label="Welch")
+            case 2:
+                window.analysisMpl.axes.semilogy(f_p*3600, np.sqrt(P_p), label="PSD")
+                window.analysisMpl.axes.semilogy(f_w*3600, np.sqrt(P_w), label="Welch")
+            case 3:
+                window.analysisMpl.axes.loglog(f_p*3600, np.sqrt(P_p), label="PSD")
+                window.analysisMpl.axes.loglog(f_w*3600, np.sqrt(P_w), label="Welch")
+        window.analysisMpl.axes.set_xlabel("1/3600 Hz")
+        window.analysisMpl.axes.set_ylabel("C√h")
         window.analysisMpl.axes.grid(True)
         window.analysisMpl.axes.legend()
         window.analysisMpl.draw()

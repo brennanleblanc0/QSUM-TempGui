@@ -281,7 +281,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>0</number>
+          <number>3</number>
          </property>
          <widget class="QWidget" name="graphTab">
           <attribute name="title">
@@ -460,6 +460,43 @@
               </widget>
              </item>
              <item alignment="Qt::AlignRight">
+              <widget class="QLabel" name="axisLabel">
+               <property name="text">
+                <string>Axis Settings:</string>
+               </property>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignLeft">
+              <widget class="QComboBox" name="axisCombo">
+               <property name="maximumSize">
+                <size>
+                 <width>150</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <item>
+                <property name="text">
+                 <string>Linear</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Semi Log x</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Semi Log y</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Log Log</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item alignment="Qt::AlignRight">
               <widget class="QLabel" name="welchLabel">
                <property name="maximumSize">
                 <size>
@@ -492,6 +529,11 @@
                </item>
                <item>
                 <property name="text">
+                 <string>3</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
                  <string>4</string>
                 </property>
                </item>
@@ -518,6 +560,7 @@
     </item>
    </layout>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <customwidgets>
   <customwidget>

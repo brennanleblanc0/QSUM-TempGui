@@ -5,6 +5,8 @@ import threading
 import os
 import math
 
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
 class DeviceReader(threading.Thread):
     def __init__(self, window, interval, isAveraging, fileName, isLogging):
         threading.Thread.__init__(self, daemon=True)
@@ -47,7 +49,7 @@ class DeviceReader(threading.Thread):
                 while True:
                     if self.isLogging and curMonth < int(datetime.datetime.now(datetime.timezone.utc).strftime("%m")):
                         curDate = datetime.datetime.now(datetime.timezone.utc).strftime("%m.%Y")
-                        self.fileName = self.__openFile(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}.txt")
+                        self.fileName = self.__openFile(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}_1.txt")
                         self.window.browseSaveLine.setText(self.fileName)
                         self.__openFile()
                     #Declare variables and constants for measurements
@@ -99,7 +101,7 @@ class DeviceReader(threading.Thread):
                 #Close the connection to the TSP01 Rev. B.
                 lib.TLTSPB_close(sessionHandle)
         else:
-            print("No connected TSP01 Rev. B devices were detected. Check connections and installed drivers.")
+            self.window.statusBar.showMessage("No connected TSP01 Rev. B devices were detected. Check connections and installed drivers.", 10)
     def __openFile(self):
         if os.path.exists(self.fileName):
             self.f = open(self.fileName, "a")
