@@ -8,6 +8,9 @@ import time, datetime
 import math
 import os
 
+# Obsolete and probably very inaccurate
+# Uses USB-201 DAQ by Measurement Computing
+
 class ThermistorData(threading.Thread):
     def __init__(self, window, interval, isAveraging, fileName, isLogging):
         threading.Thread.__init__(self, daemon=True)

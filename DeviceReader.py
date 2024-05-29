@@ -7,6 +7,7 @@ import math
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
+# Subclass of thread. Allows for GUI interaction + logging/live data
 class DeviceReader(threading.Thread):
     def __init__(self, window, interval, isAveraging, fileName, isLogging):
         threading.Thread.__init__(self, daemon=True)
@@ -16,6 +17,7 @@ class DeviceReader(threading.Thread):
         self.fileName = fileName
         self.isLogging = isLogging
     def run(self):
+        # Allow for live data with or without logging
         if self.isLogging:
             self.__openFile()
         curMonth = int(datetime.datetime.now(datetime.timezone.utc).strftime("%m"))
@@ -67,17 +69,23 @@ class DeviceReader(threading.Thread):
 
                     temp = temperature.value
                     humid = humidity.value
+                    # Live data display
                     self.window.curTempNumber.display("{:.2f}".format(temp))
                     self.window.curHumidNumber.display("{:.2f}".format(humid))
+                    # Logging procedure
                     if self.isLogging:
+                        # Used for averaging (if enabled)
                         prevData[0].append(temp)
                         prevData[1].append(humid)
+                    # Make sure one interval has passed
                     if self.isLogging and (datetime.datetime.now(datetime.timezone.utc).timestamp() - t_0) >= self.interval:
                         t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
                         curTime = datetime.datetime.fromtimestamp(t_0).strftime("%b %d %Y\t%H:%M:%S")
                         if self.isAveraging:
+                            # Average Interval/0.5 data points
                             avgT = 0
                             avgH = 0
+                            # Average
                             for i in range(0, len(prevData[0])):
                                 avgT += prevData[0][i]
                                 avgH += prevData[1][i]
@@ -85,27 +93,32 @@ class DeviceReader(threading.Thread):
                             avgH /= len(prevData[1])
                             stdDevT = 0
                             stdDevH = 0
+                            # Std. Dev
                             for i in range(0, len(prevData[0])):
                                 stdDevT += (prevData[0][i] - avgT)**2
                                 stdDevH += (prevData[1][i] - avgH)**2
                             stdDevT = math.sqrt(stdDevT / len(prevData[0]))
                             stdDevH = math.sqrt(stdDevH / len(prevData[1]))
+                            # Write into file
                             self.f.write(f"New\t{curTime}\t{avgT:.2f}\t{avgH:.2f}\t--\t--\t{stdDevT}\t{stdDevH}\n")
                         else:
+                            # Write into file (with no average)
                             self.f.write(f"New\t{curTime}\t{temp:.2f}\t{humid:.2f}\t--\t--\t--\n")
+                        # Push all changes to the file
                         self.f.flush()
+                        # Reset averaging data
                         prevData = [[],[]]
-            finally:
+            finally: # If an exception is thrown to stop the thread
                 if self.isLogging:
                     self.f.close()
                 #Close the connection to the TSP01 Rev. B.
                 lib.TLTSPB_close(sessionHandle)
         else:
             self.window.statusBar.showMessage("No connected TSP01 Rev. B devices were detected. Check connections and installed drivers.", 10)
-    def __openFile(self):
-        if os.path.exists(self.fileName):
+    def __openFile(self): # Default process to open a file
+        if os.path.exists(self.fileName): # Append to an existing file
             self.f = open(self.fileName, "a")
-        else:
+        else: # Prepare a new file
             self.f = open(self.fileName, "w")
             self.f.write("QSUM Temperature and Humidity Monitor Log\n")
             self.f.write("Device:TSP01B\n")
@@ -114,6 +127,8 @@ class DeviceReader(threading.Thread):
             self.f.write(f"Begin Data Table\n")
             self.f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev Temp\t Std. Dev Humid\n")
             self.f.flush()
+            
+    # Threading stuff
     def get_id(self):
         if hasattr(self, '_thread_id'):
             return self._thread_id

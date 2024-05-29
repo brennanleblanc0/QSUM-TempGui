@@ -3,7 +3,6 @@ import matplotlib.axes
 import matplotlib.figure
 import matplotlib.pyplot
 import matplotlib.dates as mdates
-from pyqtgraph import PlotWidget
 from CustomGuiUtils import OldDataParser
 from DeviceReader import DeviceReader
 from datetime import datetime, timezone
@@ -16,9 +15,10 @@ matplotlib.use('QtAgg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-# TODO:
+# TODO
 # - Switch from threading to multiprocessing: We gain better speedup across multiple cores at the cost of shared memory
 # (some instances should still use threading but data grabbing, for example, benefits from multiprocessing)
+# - Implement live data plotting
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=100, height=100, dpi=100):
@@ -110,6 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.plot(a[0], a[1], a[2], a[len(a)-1])
             threads = []
             totalLen += len(a[0])
+        # Setup toggle legend
         self.map_legend_to_temp = {}
         self.map_legend_to_humid = {}
         pickradius = 5
@@ -123,7 +124,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.humidWidget.mpl_connect('pick_event', self.on_pick_humid)
         self.tempWidget.axes.legend_.set_draggable(True)
         self.humidWidget.axes.legend_.set_draggable(True)
+        # Finished
         self.statusBar.clearMessage()
+    # Routine for plotting a set of data
     def plot(self, date, temp, humid, label):
         if len(date) == 0:
             return
@@ -137,6 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.humidWidget.axes.grid(True)
         self.tempWidget.draw()
         self.humidWidget.draw()
+    # If a Temperature graph line is toggled
     def on_pick_temp(self, event):
         legend_line = event.artist
         if legend_line not in self.map_legend_to_temp:
@@ -146,6 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ax_line.set_visible(visible)
         legend_line.set_alpha(1.0 if visible else 0.2)
         self.tempWidget.draw()
+    # If a Humidity graph line is toggled
     def on_pick_humid(self, event):
         legend_line = event.artist
         if legend_line not in self.map_legend_to_humid:
@@ -155,10 +160,13 @@ class MainWindow(QtWidgets.QMainWindow):
         ax_line.set_visible(visible)
         legend_line.set_alpha(1.0 if visible else 0.2)
         self.humidWidget.draw()
+    # Loading a file radio
     def loadFileHasChanged(self, s):
         self.loadFileWidget.setEnabled(s)
+    # Loading a date range radio
     def loadDateHasChanged(self, s):
         self.loadDateWidget.setEnabled(s)
+    # Start logging button
     def saveFile(self):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
@@ -166,24 +174,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dataThread = DeviceReader(self, self.intervalSpin.value(), self.averageCheck.isChecked(), self.browseSaveLine.text(), True)
         self.dataThread.start()
         self.statusLabel.setText("Logging in progress...")
+    # Save settings (loading) button
     def loadFile(self):
         self.statusBar.showMessage("Plotting data...")
         newThread = threading.Thread(None, self.displayData, None, [])
         newThread.start()
+    # Browse for a file in save area
     def browseSavePressed(self):
         getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Save As...", f"{os.getcwd()}/logs", "Text files (*.txt)")
         if len(getFile[0]) > 0:
             self.browseSaveLine.setText(getFile[0])
+    # Browse for a file in load area
     def browseLoadPressed(self):
         getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Open...", f"{os.getcwd()}/logs", "Text files (*.txt)")
         if len(getFile[0]) > 0:
             self.browseLoadLine.setText(getFile[0])
+    # PSD + Welch button
     def genButtonPressed(self):
         if not self.curData == None:
             self.analysisMpl.axes.clear()
             newThread = threading.Thread(None, OldDataParser.psdAndWelch, None, [self, self.curData, int(self.welchCombo.currentText()), self.intervalSpin.value(), self.axisCombo.currentIndex()])
             newThread.start()
-        else:
+        else: # If no data has been loaded
             QtWidgets.QMessageBox.warning(
                 self,
                 "Analysis Warning",
@@ -191,6 +203,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 buttons=QtWidgets.QMessageBox.StandardButton.Ok,
                 defaultButton=QtWidgets.QMessageBox.StandardButton.Ok
             )
+    # Stop logging, switch to live only
     def stopButtonPressed(self):
         if not self.dataThread == None:
             self.dataThread.raise_exception()
@@ -202,6 +215,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dataThread.start()
         self.statusLabel.setText("Logging stopped.")
 
+# Starting up stuff
 def main():
     app = QtWidgets.QApplication(sys.argv)
     main = MainWindow()
