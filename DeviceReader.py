@@ -51,7 +51,7 @@ class DeviceReader(threading.Thread):
                 while True:
                     if self.isLogging and curMonth < int(datetime.datetime.now(datetime.timezone.utc).strftime("%m")):
                         curDate = datetime.datetime.now(datetime.timezone.utc).strftime("%m.%Y")
-                        self.fileName = self.__openFile(f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}_1.txt")
+                        self.fileName = f"{os.getcwd()}/logs/QSUM_TempLog_{curDate}_1.txt"
                         self.window.browseSaveLine.setText(self.fileName)
                         self.__openFile()
                     #Declare variables and constants for measurements
