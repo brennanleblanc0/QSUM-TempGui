@@ -127,6 +127,7 @@ class DeviceReader(threading.Thread):
                         self.f.flush()
                         # Reset averaging data
                         prevData = [[],[]]
+                        prevCh1Data = []
             finally: # If an exception is thrown to stop the thread
                 if self.isLogging:
                     self.f.close()
