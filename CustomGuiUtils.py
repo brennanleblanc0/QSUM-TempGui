@@ -114,7 +114,7 @@ class OldDataParser():
             outArr[0][j] = convDateTime.timestamp()
             outArr[1][j] = float(tokens[3])
             outArr[2][j] = float(tokens[4])
-            outArr[3][j] = tokens[5]
+            outArr[3][j] = float(tokens[5])
             outArr[4][j] = tokens[6][0:len(tokens[6])-1]
     
     # Perform + Display a PSD and Welch

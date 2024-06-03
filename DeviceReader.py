@@ -45,6 +45,7 @@ class DeviceReader(threading.Thread):
             try:
                 t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
                 prevData = [[],[]]
+                prevCh1Data = []
                 #Initialize the device.
                 sessionHandle=c_ulong(0)
                 lib.TLTSPB_init(deviceName, 0, 0, byref(sessionHandle))
@@ -58,25 +59,37 @@ class DeviceReader(threading.Thread):
                     #See TLTSP_Defines.h and TLTSPB.h for definitions of constants
                     temperature=c_longdouble(0.0)
                     humidity=c_longdouble(0.0)
+                    resistance = c_double(0.0)
                     attribute = c_short(0)
                     ch_intern = c_ushort(11)
+                    ch1_extern = c_ushort(12)
 
                     #Returns the temperature measured by the internal sensor in the TSP01 in °C.
                     lib.TLTSPB_getTemperatureData(sessionHandle, ch_intern, attribute, byref(temperature))
+                    temp = temperature.value
+
+                    #Channel 1
+                    #Check if the channel is connected by verifying the resistance is not zero.
+                    lib.TLTSPB_getThermRes(sessionHandle, ch1_extern, attribute, byref(resistance))
+                    if resistance.value > 0.0:
+                        #Returns the temperature measured by external sensor on Ch 1.
+                        lib.TLTSPB_measTemperature(sessionHandle, ch1_extern, byref(temperature))
 
                     #This returns the humidity measured by the internal sensor in the TSP01.
                     lib.TLTSPB_getHumidityData(sessionHandle, attribute, byref(humidity))
 
-                    temp = temperature.value
                     humid = humidity.value
+                    tch1 = round(temperature.value, 2)
                     # Live data display
                     self.window.curTempNumber.display("{:.2f}".format(temp))
                     self.window.curHumidNumber.display("{:.2f}".format(humid))
+                    self.window.ch1Number.display("{:.2f}".format(tch1))
                     # Logging procedure
                     if self.isLogging:
                         # Used for averaging (if enabled)
                         prevData[0].append(temp)
                         prevData[1].append(humid)
+                        prevCh1Data.append(tch1)
                     # Make sure one interval has passed
                     if self.isLogging and (datetime.datetime.now(datetime.timezone.utc).timestamp() - t_0) >= self.interval:
                         t_0 = math.floor(datetime.datetime.now(datetime.timezone.utc).timestamp())
@@ -85,25 +98,31 @@ class DeviceReader(threading.Thread):
                             # Average Interval/0.5 data points
                             avgT = 0
                             avgH = 0
+                            avgCh1 = 0
                             # Average
                             for i in range(0, len(prevData[0])):
                                 avgT += prevData[0][i]
                                 avgH += prevData[1][i]
+                                avgCh1 += prevCh1Data[i]
                             avgT /= len(prevData[0])
                             avgH /= len(prevData[1])
+                            avgCh1 /= len(prevCh1Data)
                             stdDevT = 0
                             stdDevH = 0
+                            stdDevCh1 = 0
                             # Std. Dev
                             for i in range(0, len(prevData[0])):
                                 stdDevT += (prevData[0][i] - avgT)**2
                                 stdDevH += (prevData[1][i] - avgH)**2
+                                stdDevCh1 += (prevCh1Data[i] - avgCh1)**2
                             stdDevT = math.sqrt(stdDevT / len(prevData[0]))
                             stdDevH = math.sqrt(stdDevH / len(prevData[1]))
+                            stdDevCh1 = math.sqrt(stdDevCh1 / len(prevCh1Data))
                             # Write into file
-                            self.f.write(f"New\t{curTime}\t{avgT:.2f}\t{avgH:.2f}\t--\t--\t{stdDevT}\t{stdDevH}\n")
+                            self.f.write(f"New\t{curTime}\t{avgT:.2f}\t{avgH:.2f}\t{avgCh1:.2f}\t--\t{stdDevT}\t{stdDevH}\t{stdDevCh1}\n")
                         else:
                             # Write into file (with no average)
-                            self.f.write(f"New\t{curTime}\t{temp:.2f}\t{humid:.2f}\t--\t--\t--\n")
+                            self.f.write(f"New\t{curTime}\t{temp:.2f}\t{humid:.2f}\t{tch1:.2f}\t--\t--\t--\n")
                         # Push all changes to the file
                         self.f.flush()
                         # Reset averaging data
@@ -125,7 +144,7 @@ class DeviceReader(threading.Thread):
             self.f.write("S/N:M00995273\n")
             self.f.write(f"Measurement Interval:{self.interval}\n")
             self.f.write(f"Begin Data Table\n")
-            self.f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev Temp\t Std. Dev Humid\n")
+            self.f.write("Time [s]\tDate\tTime\tTemperature[°C]\tHumidity[%]\tTH1[°C]\tTH2[°C]\tStd. Dev Temp\t Std. Dev Humid\t Std. Dev Ch1\n")
             self.f.flush()
             
     # Threading stuff
