@@ -63,6 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Start live data without logging
         self.dataThread = DeviceReader(self, 10, self.averageCheck.isChecked(), self.browseSaveLine.text(), False)
         self.dataThread.start()
+        self.loadThread = None
     def displayData(self):
         # ======= Reset Graphs =======
         self.tempWidget.axes.clear()
@@ -126,6 +127,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.humidWidget.axes.legend_.set_draggable(True)
         # Finished
         self.statusBar.clearMessage()
+        self.loadThread = None
     # Routine for plotting a set of data
     def plot(self, date, temp, humid, label):
         if len(date) == 0:
@@ -176,9 +178,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusLabel.setText("Logging in progress...")
     # Save settings (loading) button
     def loadFile(self):
+        if (self.loadThread != None):
+            self.statusBar.showMessage("Please wait for data to finish plotting...")
+            return
         self.statusBar.showMessage("Plotting data...")
-        newThread = threading.Thread(None, self.displayData, None, [])
-        newThread.start()
+        self.loadThread = threading.Thread(None, self.displayData, None, [])
+        self.loadThread.start()
     # Browse for a file in save area
     def browseSavePressed(self):
         getFile = QtWidgets.QFileDialog.getOpenFileName(self, "Save As...", f"{os.getcwd()}/logs", "Text files (*.txt)")
